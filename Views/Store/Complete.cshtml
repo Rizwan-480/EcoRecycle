@@ -1,0 +1,112 @@
+@model EcoRecycle.Models.ViewModels.CompletePickupViewModel
+@{
+    ViewData["Title"] = "Complete Pickup";
+}
+
+<div class="row py-4">
+    <div class="col-lg-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-clipboard2-check me-2"></i>Finalize Collection weights</h2>
+                <p class="text-secondary m-0">Input the calibrated scale weights for each collected waste category.</p>
+            </div>
+            <a asp-action="Details" asp-route-id="@Model.PickupID" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i> Cancel</a>
+        </div>
+
+        <div class="glass-card p-4 p-md-5 shadow-sm">
+            <h5 class="fw-bold text-success border-bottom pb-2 mb-3">Client: @Model.UserFullName</h5>
+            <p class="text-secondary small mb-4">Address: @Model.Address</p>
+
+            <form asp-action="Complete" method="post" id="completeForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+                
+                <input type="hidden" asp-for="PickupID" />
+                <input type="hidden" asp-for="UserFullName" />
+                <input type="hidden" asp-for="Address" />
+
+                <div class="d-flex flex-column gap-3 mb-4">
+                    @for (int i = 0; i < Model.Items.Count; i++)
+                    {
+                        <div class="p-3 border rounded-4 bg-body-tertiary d-flex flex-wrap align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <i class="bi bi-recycle text-success fs-4"></i>
+                                <div>
+                                    <span class="fw-bold text-primary-emphasis d-block">@Model.Items[i].CategoryName</span>
+                                    <small class="text-secondary">Multiplier: @Model.Items[i].PointsPerKg pts / Kg</small>
+                                    <input type="hidden" asp-for="@Model.Items[i].ItemID" />
+                                    <input type="hidden" asp-for="@Model.Items[i].CategoryID" />
+                                    <input type="hidden" asp-for="@Model.Items[i].CategoryName" />
+                                    <input type="hidden" asp-for="@Model.Items[i].PointsPerKg" class="pts-multiplier" />
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-3 align-items-center mt-2 mt-sm-0">
+                                <div style="width: 130px;">
+                                    <div class="input-group">
+                                        <input asp-for="@Model.Items[i].ActualWeight" type="number" step="0.01" min="0" class="form-control text-center weight-input" required />
+                                        <span class="input-group-text bg-body">Kg</span>
+                                    </div>
+                                </div>
+                                <div class="text-end" style="width: 100px;">
+                                    <span class="small text-secondary d-block">Subtotal pts:</span>
+                                    <strong class="text-success item-subtotal">0 pts</strong>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Aggregated live calculator card -->
+                <div class="bg-success-subtle border border-success-subtle text-success-emphasis rounded-4 p-4 mb-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold m-0 text-secondary text-uppercase" style="font-size: 0.75rem;">Simulated Credit Reward</h6>
+                        <span class="display-6 fw-extrabold text-success" id="liveTotalPoints">0</span> <span class="fs-4 text-success fw-bold">points</span>
+                    </div>
+                    <div class="text-end">
+                        <span class="small text-secondary-emphasis d-block">Total Weight:</span>
+                        <strong class="fs-5" id="liveTotalWeight">0.00 Kg</strong>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-eco btn-lg w-100 py-3 rounded-pill fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Submit and Complete Pickup</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const rows = document.querySelectorAll(".weight-input");
+            
+            function calculateTotals() {
+                let totalWeight = 0;
+                let totalPoints = 0;
+
+                rows.forEach(input => {
+                    const rowContainer = input.closest(".p-3");
+                    const multiplier = parseFloat(rowContainer.querySelector(".pts-multiplier").value) || 0;
+                    const weight = parseFloat(input.value) || 0;
+                    
+                    const subtotal = weight * multiplier;
+                    totalWeight += weight;
+                    totalPoints += Math.round(subtotal);
+
+                    // Update subtotal display
+                    rowContainer.querySelector(".item-subtotal").innerText = `${Math.round(subtotal)} pts`;
+                });
+
+                document.getElementById("liveTotalPoints").innerText = totalPoints;
+                document.getElementById("liveTotalWeight").innerText = `${totalWeight.toFixed(2)} Kg`;
+            }
+
+            rows.forEach(input => {
+                input.addEventListener("input", calculateTotals);
+            });
+
+            // Initial calculate on load
+            calculateTotals();
+        });
+    </script>
+}

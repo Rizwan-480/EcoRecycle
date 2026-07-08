@@ -1,0 +1,231 @@
+@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EcoRecycle</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Leaflet.js CSS (Map Fallback) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Custom site styling -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body data-role="@(User.FindFirst(ClaimTypes.Role)?.Value ?? "Guest")">
+    <header>
+        <nav class="navbar navbar-expand-lg border-bottom py-3 bg-body-tertiary">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center fw-bold text-success fs-4" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-recycle me-2"></i>
+                    <span>EcoRecycle</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        @if (!User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Home" asp-action="EcoTips">Eco Tips</a>
+                            </li>
+                        }
+                        else
+                        {
+                            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+                            if (role == "User")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="User" asp-action="Index">Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="User" asp-action="ThrowWaste"><i class="bi bi-trash3 me-1 text-success"></i> Throw Waste</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="User" asp-action="ActiveRequests">Active Requests</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="User" asp-action="History">Recycle History</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="User" asp-action="Map">Centers Map</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="User" asp-action="Rewards">Reward Store</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="User" asp-action="Campaigns">Campaigns</a>
+                                </li>
+                            }
+                            else if (role == "RecyclingStore")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Store" asp-action="Index">Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Store" asp-action="Queue">Request Queue</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Store" asp-action="Materials">Materials & Rates</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Store" asp-action="History">Completed Pickups</a>
+                                </li>
+                            }
+                            else if (role == "Admin")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Admin" asp-action="Index">Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Admin" asp-action="Users">Manage Users</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Admin" asp-action="Stores">Store Approvals</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Admin" asp-action="Categories">Waste Categories</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Admin" asp-action="Campaigns">Campaigns</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Admin" asp-action="Rewards">Rewards Manager</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Admin" asp-action="Verification">QR Verification</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Admin" asp-action="Settings">System Settings</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark-emphasis fw-medium" asp-controller="Admin" asp-action="AuditLogs">Audit Logs</a>
+                                </li>
+                            }
+                        }
+                    </ul>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- Dark / Light Theme Toggle Button -->
+                        <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
+                            <i class="bi bi-moon-fill"></i>
+                        </button>
+
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+                            if (role == "User")
+                            {
+                                <!-- Live Notification Bell for Users -->
+                                <a asp-controller="User" asp-action="Notifications" class="nav-link-notification text-dark-emphasis fs-5 me-2" title="Notifications">
+                                    <i class="bi bi-bell"></i>
+                                    <span id="notification-badge-el" class="notification-badge" style="display: none;">0</span>
+                                </a>
+                            }
+
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 rounded-pill px-3" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @if (!string.IsNullOrEmpty(User.FindFirst("AvatarUrl")?.Value) && User.FindFirst("AvatarUrl")?.Value != "/images/default-avatar.png")
+                                    {
+                                        <img src="@User.FindFirst("AvatarUrl")?.Value" alt="Avatar" class="rounded-circle" style="width: 24px; height: 24px; object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+                                        var fullNameStr = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "?";
+                                        var letter = fullNameStr.Trim().Length > 0 ? fullNameStr.Trim().Substring(0, 1).ToUpper() : "?";
+                                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 24px; height: 24px; font-size: 11px; line-height: 1;">
+                                            @letter
+                                        </div>
+                                    }
+                                    <span>@User.FindFirst("FullName")?.Value</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userMenu">
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Sign Out</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-success rounded-pill px-4 fw-semibold" asp-controller="Account" asp-action="Login">Sign In</a>
+                            <a class="btn btn-success rounded-pill px-4 fw-semibold" asp-controller="Account" asp-action="Register">Join Now</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="py-4">
+        <div class="container">
+            <!-- Global Flash Messages (Toasts / Alerts) -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Global Toast Container for Live Alerts -->
+    <div id="toast-container-el" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>
+
+    <footer class="py-4 mt-auto">
+        <div class="container text-center">
+            <div class="d-flex justify-content-center align-items-center gap-2 mb-2 text-success fw-bold">
+                <i class="bi bi-recycle"></i>
+                <span>EcoRecycle</span>
+            </div>
+            <p class="mb-1 text-secondary-emphasis">EcoRecycle – Smart Waste Recycling Management System &copy; @DateTime.Now.Year</p>
+            <small class="text-secondary">Designed for clean neighborhoods and sustainable ecosystems.</small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 Bundle JS (Popper + Bootstrap) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    
+    <!-- Leaflet.js JS (Map Fallback) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- QR Code Library (cdnjs CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nOMdBmddKo8OD5tNmcKCIVd74gHsUtYB135QQmK5vjkbLfODgYmHg18AE8tT1rxz45DdxELC24Ig==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Core App JS -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

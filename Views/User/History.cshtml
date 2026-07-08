@@ -1,0 +1,98 @@
+@model List<EcoRecycle.Models.PickupRequest>
+@{
+    ViewData["Title"] = "Recycle History";
+}
+
+<div class="row py-4">
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-journals me-2"></i>Recycle History Log</h2>
+            <p class="text-secondary m-0">Review all completed recycling transactions, weight aggregates, and earned points.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i> Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="glass-card p-3 bg-success-subtle text-success-emphasis border border-success-subtle d-flex justify-content-between align-items-center">
+            <div>
+                <span class="small d-block text-secondary text-uppercase fw-bold">Total Weight Recycled</span>
+                <span class="fs-3 fw-extrabold text-success">@ViewBag.TotalWeight Kg</span>
+            </div>
+            <i class="bi bi-recycle fs-1"></i>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="glass-card p-3 bg-primary-subtle text-primary-emphasis border border-primary-subtle d-flex justify-content-between align-items-center">
+            <div>
+                <span class="small d-block text-secondary text-uppercase fw-bold">Total Reward Points Gained</span>
+                <span class="fs-3 fw-extrabold text-primary">@ViewBag.TotalPoints pts</span>
+            </div>
+            <i class="bi bi-award fs-1"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="glass-card p-4 shadow-sm">
+            @if (Model != null && Model.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Date Finished</th>
+                                <th>Recycling Store</th>
+                                <th>Street Address</th>
+                                <th>Actual Weight</th>
+                                <th>Reward Credit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="d-block fw-semibold text-primary-emphasis">@r.UpdatedAt.ToString("MMM dd, yyyy")</span>
+                                        <small class="text-secondary">@r.UpdatedAt.ToString("t")</small>
+                                    </td>
+                                    <td>
+                                        <strong class="text-primary-emphasis">@r.StoreName</strong>
+                                    </td>
+                                    <td>
+                                        <span class="text-truncate-2 d-inline-block small" style="max-width: 250px;">@r.Address</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">@(r.TotalWeight.HasValue ? r.TotalWeight.Value.ToString("N1") + " Kg" : "N/A")</span>
+                                    </td>
+                                    <td>
+                                        @if (r.Status == "Completed")
+                                        {
+                                            <strong class="text-success">+@r.TotalPoints pts</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-secondary">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @(r.Status == "Completed" ? "bg-success" : "bg-secondary") rounded-pill px-3 py-1">
+                                            @r.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-secondary text-center py-5">No completed recycling activities in your historical log.</p>
+            }
+        </div>
+    </div>
+</div>

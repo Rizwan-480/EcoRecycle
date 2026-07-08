@@ -1,0 +1,171 @@
+@model List<EcoRecycle.Models.Reward>
+@{
+    ViewData["Title"] = "Manage Rewards";
+}
+
+<div class="row py-4">
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-gift-fill me-2"></i>Reward Catalog Administration</h2>
+            <p class="text-secondary m-0">Create new reward catalog items, update stock levels, and set points costs.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success rounded-pill px-4" id="btnAddReward"><i class="bi bi-plus-lg me-1"></i> Add Reward</button>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-flex align-items-center"><i class="bi bi-arrow-left me-1"></i> Back</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="glass-card p-4 shadow-sm">
+            @if (Model != null && Model.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Reward Item</th>
+                                <th>Points Cost</th>
+                                <th>Inventory Stock</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary-emphasis d-block">@r.Name</strong>
+                                        <small class="text-secondary">@r.Description</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 rounded-pill px-3">
+                                            @r.PointsCost pts
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold @(r.StockCount <= 5 ? "text-danger" : "")">@r.StockCount units</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(r.IsActive ? "bg-success" : "bg-secondary")">
+                                            @(r.IsActive ? "Available" : "Hidden")
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 btn-edit-reward" data-id="@r.RewardID" data-name="@r.Name" data-desc="@r.Description" data-cost="@r.PointsCost" data-stock="@r.StockCount" data-active="@(r.IsActive ? "true" : "false")" data-image="@r.ImageUrl">
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Reward Add/Edit -->
+<div class="modal fade" id="rewardModal" tabindex="-1" aria-labelledby="rewardModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <form asp-action="SaveReward" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-bold text-success-emphasis" id="rewardModalLabel">Add Reward</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="rewardId" id="rewardIdInput" value="0" />
+
+                    <div class="mb-3">
+                        <label for="rewardNameInput" class="form-label fw-semibold">Reward Name</label>
+                        <input type="text" name="name" id="rewardNameInput" class="form-control" placeholder="e.g. Stainless Steel Flask" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="rewardDescInput" class="form-label fw-semibold">Description</label>
+                        <input type="text" name="description" id="rewardDescInput" class="form-control" placeholder="e.g. 500ml vacuum insulated" required />
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="rewardCostInput" class="form-label fw-semibold">Points Cost</label>
+                            <input type="number" name="pointsCost" id="rewardCostInput" class="form-control" min="1" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="rewardStockInput" class="form-label fw-semibold">Stock Count</label>
+                            <input type="number" name="stockCount" id="rewardStockInput" class="form-control" min="0" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="rewardImageInput" class="form-label fw-semibold">Image URL / Path</label>
+                        <input type="text" name="imageUrl" id="rewardImageInput" class="form-control" placeholder="/images/rewards/bottle.jpg" />
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="isActive" value="true" class="form-check-input" id="rewardActiveCheck" checked />
+                        <input type="hidden" name="isActive" value="false" />
+                        <label class="form-check-label text-secondary small" for="rewardActiveCheck">Reward Item Active</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4">Save Reward</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modalEl = document.getElementById("rewardModal");
+            const modal = new bootstrap.Modal(modalEl);
+            const modalTitle = document.getElementById("rewardModalLabel");
+            
+            // Form inputs
+            const rewardId = document.getElementById("rewardIdInput");
+            const rewardName = document.getElementById("rewardNameInput");
+            const rewardDesc = document.getElementById("rewardDescInput");
+            const rewardCost = document.getElementById("rewardCostInput");
+            const rewardStock = document.getElementById("rewardStockInput");
+            const rewardImage = document.getElementById("rewardImageInput");
+            const rewardCheck = document.getElementById("rewardActiveCheck");
+
+            // Add trigger
+            document.getElementById("btnAddReward").addEventListener("click", function () {
+                modalTitle.innerText = "Create Catalog Reward";
+                rewardId.value = "0";
+                rewardName.value = "";
+                rewardDesc.value = "";
+                rewardCost.value = "100";
+                rewardStock.value = "50";
+                rewardImage.value = "/images/rewards/tote.jpg";
+                rewardCheck.checked = true;
+                modal.show();
+            });
+
+            // Edit trigger
+            const editButtons = document.querySelectorAll(".btn-edit-reward");
+            editButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    modalTitle.innerText = "Edit Catalog Reward";
+                    rewardId.value = btn.dataset.id;
+                    rewardName.value = btn.dataset.name;
+                    rewardDesc.value = btn.dataset.desc;
+                    rewardCost.value = btn.dataset.cost;
+                    rewardStock.value = btn.dataset.stock;
+                    rewardImage.value = btn.dataset.image;
+                    rewardCheck.checked = btn.dataset.active === "true";
+                    modal.show();
+                });
+            });
+        });
+    </script>
+}

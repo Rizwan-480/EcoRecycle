@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2bb673" />
+      <stop offset="100%" stop-color="#198754" />
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="url(#grad)" />
+  <!-- Elegant white stylized leaf & recycling loop -->
+  <path d="M256,120 C180,120 140,180 140,256 C140,332 200,380 256,380 C312,380 372,332 372,256 C372,180 332,120 256,120 Z M256,350 C210,350 170,310 170,256 C170,202 210,162 256,162 C302,162 342,202 342,256 C342,310 302,350 256,350 Z" fill="#ffffff" opacity="0.35"/>
+  <path d="M256,150 C290,150 310,180 310,210 C310,250 256,330 256,330 C256,330 202,250 202,210 C202,180 222,150 256,150 Z" fill="#ffffff"/>
+  <path d="M256,220 C265,220 272,213 272,204 C272,195 265,188 256,188 C247,188 240,195 240,204 C240,213 247,220 256,220 Z" fill="#198754"/>
+</svg>

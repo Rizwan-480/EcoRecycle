@@ -1,0 +1,209 @@
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "User Dashboard";
+    var user = ViewBag.User as EcoRecycle.Models.User;
+    var pickups = ViewBag.RecentPickups as List<EcoRecycle.Models.PickupRequest>;
+    var badges = ViewBag.Badges as List<EcoRecycle.Models.Badge>;
+    var notifications = ViewBag.Notifications as List<EcoRecycle.Models.Notification>;
+
+    int currentPoints = user?.RewardPoints ?? 0;
+    string nextBadgeName = "Maximum Badge";
+    int nextBadgePoints = 1000;
+    double badgeProgressPercent = 100;
+    
+    if (currentPoints < 100) {
+        nextBadgeName = "Eco Apprentice";
+        nextBadgePoints = 100;
+        badgeProgressPercent = (currentPoints / 100.0) * 100;
+    } else if (currentPoints < 500) {
+        nextBadgeName = "Zero-Waste Hero";
+        nextBadgePoints = 500;
+        badgeProgressPercent = ((currentPoints - 100) / 400.0) * 100;
+    } else if (currentPoints < 1000) {
+        nextBadgeName = "Earth Guardian";
+        nextBadgePoints = 1000;
+        badgeProgressPercent = ((currentPoints - 500) / 500.0) * 100;
+    }
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold m-0"><i class="bi bi-speedometer2 text-success me-2"></i>Recycler Dashboard</h2>
+            <p class="text-secondary m-0">Welcome back, @User.FindFirst("FullName")?.Value! Recycle waste to earn reward giftcards.</p>
+        </div>
+        <a asp-action="ThrowWaste" class="btn btn-success btn-lg rounded-pill px-4 shadow-sm fw-bold"><i class="bi bi-trash3 me-1"></i> Throw Waste to Store</a>
+    </div>
+</div>
+
+<!-- Widgets Row -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="glass-card p-4 h-100 bg-success-subtle text-success-emphasis border border-success-subtle">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h6 class="text-secondary small text-uppercase fw-bold m-0">My Reward Points</h6>
+                    <span class="display-5 fw-extrabold text-success">@currentPoints</span>
+                </div>
+                <div class="fs-1"><i class="bi bi-piggy-bank"></i></div>
+            </div>
+            <div class="mt-4">
+                <div class="d-flex justify-content-between small text-secondary-emphasis mb-1">
+                    <span>Next Badge: <strong>@nextBadgeName</strong></span>
+                    <span>@currentPoints/@nextBadgePoints pts</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: @badgeProgressPercent%" aria-valuenow="@currentPoints" aria-valuemin="0" aria-valuemax="@nextBadgePoints"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="glass-card p-4 h-100 bg-primary-subtle text-primary-emphasis border border-primary-subtle">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="text-secondary small text-uppercase fw-bold m-0">Completed Collections</h6>
+                    <span class="display-5 fw-extrabold text-primary">@ViewBag.CompletedCount</span>
+                </div>
+                <div class="fs-1"><i class="bi bi-check2-circle"></i></div>
+            </div>
+            <p class="text-secondary small mt-4 m-0">Logistics transactions complete</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="glass-card p-4 h-100 bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="text-secondary small text-uppercase fw-bold m-0">Total Weight Recycled</h6>
+                    <span class="display-5 fw-extrabold text-warning">@ViewBag.TotalWeight <span class="fs-5">Kg</span></span>
+                </div>
+                <div class="fs-1"><i class="bi bi-recycle"></i></div>
+            </div>
+            <p class="text-secondary small mt-4 m-0">Diverted from community landfills</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Quick Actions & Recent Pickups -->
+    <div class="col-lg-8">
+        <!-- Quick Action Shortcuts -->
+        <div class="glass-card p-4 shadow-sm mb-4">
+            <h5 class="fw-bold mb-3 text-success-emphasis border-bottom pb-2">Quick Actions</h5>
+            <div class="d-flex flex-wrap gap-3">
+                <a asp-action="ThrowWaste" class="btn btn-eco px-4 py-2"><i class="bi bi-trash3-fill me-1"></i> Throw Waste to Store</a>
+                <a asp-action="ActiveRequests" class="btn btn-outline-success rounded-pill px-4 py-2"><i class="bi bi-clock-history me-1"></i> Check Active Request Status</a>
+                <a asp-action="History" class="btn btn-outline-success rounded-pill px-4 py-2"><i class="bi bi-journals me-1"></i> View Recycle History</a>
+                <a asp-action="Rewards" class="btn btn-outline-success rounded-pill px-4 py-2"><i class="bi bi-gift me-1"></i> Redeem Giftcards</a>
+            </div>
+        </div>
+
+        <!-- Recent Pickup table -->
+        <div class="glass-card p-4 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+                <h5 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-calendar-event me-2"></i>Recent Activity</h5>
+                <a asp-action="History" class="small text-success text-decoration-none fw-semibold">View All <i class="bi bi-chevron-right"></i></a>
+            </div>
+
+            @if (pickups != null && pickups.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Requested</th>
+                                <th>Assigned Store</th>
+                                <th>Status</th>
+                                <th class="text-end">Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in pickups)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="d-block fw-semibold text-primary-emphasis">@p.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                    </td>
+                                    <td>
+                                        <strong class="text-dark-emphasis">@(p.StoreName ?? "Self-assigned")</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(p.Status == "Completed" ? "bg-success" : p.Status == "Scheduled" ? "bg-info text-white" : p.Status == "Rejected" ? "bg-danger" : "bg-warning text-dark") rounded-pill px-3 py-1">
+                                            @p.Status
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        @if (p.Status == "Completed")
+                                        {
+                                            <strong class="text-success">+@p.TotalPoints pts</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-secondary">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4 text-secondary">
+                    <i class="bi bi-calendar-x fs-1"></i>
+                    <p class="mt-2 small">You haven't requested any waste collections yet.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right Sidebar: Badges & Notifications -->
+    <div class="col-lg-4">
+        <!-- Badges widget -->
+        <div class="glass-card p-4 shadow-sm mb-4">
+            <h5 class="fw-bold mb-3 text-success-emphasis border-bottom pb-2"><i class="bi bi-shield-check me-2"></i>My Badges</h5>
+            @if (badges != null && badges.Count > 0)
+            {
+                <div class="row g-2">
+                    @foreach (var b in badges)
+                    {
+                        <div class="col-6 text-center py-2 border rounded-4 bg-body-tertiary">
+                            <i class="bi @b.IconUrl text-success fs-3"></i>
+                            <span class="d-block fw-bold small text-primary-emphasis mt-1">@b.Name</span>
+                            <span class="text-secondary" style="font-size: 0.7rem;">@b.Description</span>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-secondary small text-center my-3">Earn reward points to unlock environmental badges.</p>
+            }
+        </div>
+
+        <!-- Notifications widget -->
+        <div class="glass-card p-4 shadow-sm">
+            <h5 class="fw-bold mb-3 text-success-emphasis border-bottom pb-2"><i class="bi bi-bell me-2"></i>Notifications</h5>
+            @if (notifications != null && notifications.Count > 0)
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var n in notifications)
+                    {
+                        <div class="border-bottom pb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 0.65rem;">@n.Type</span>
+                                <small class="text-secondary" style="font-size: 0.7rem;">@n.CreatedAt.ToString("MMM dd")</small>
+                            </div>
+                            <p class="m-0 text-secondary-emphasis small">@n.Message</p>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-secondary small text-center my-3">No recent notifications.</p>
+            }
+        </div>
+    </div>
+</div>

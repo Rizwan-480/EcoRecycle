@@ -1,0 +1,84 @@
+@model List<EcoRecycle.Models.PickupRequest>
+@{
+    ViewData["Title"] = "Active Requests";
+}
+
+<div class="row py-4">
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-clock-history me-2"></i>Active Requests Status</h2>
+            <p class="text-secondary m-0">Check the current status and scheduling details of your pending waste pickups.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="ThrowWaste" class="btn btn-success rounded-pill px-4"><i class="bi bi-plus-lg me-1"></i> Throw Waste</a>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-flex align-items-center"><i class="bi bi-arrow-left me-1"></i> Back</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="glass-card p-4 shadow-sm">
+            @if (Model != null && Model.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Date Created</th>
+                                <th>Recycling Store</th>
+                                <th>Location Details</th>
+                                <th>Current Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="d-block fw-semibold text-primary-emphasis">@r.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                        <small class="text-secondary">@r.CreatedAt.ToString("t")</small>
+                                    </td>
+                                    <td>
+                                        <strong class="text-primary-emphasis">@r.StoreName</strong>
+                                        <small class="text-secondary d-block">Tel: @(r.StoreContact ?? "N/A")</small>
+                                    </td>
+                                    <td>
+                                        <span class="text-truncate-2 d-inline-block small" style="max-width: 250px;">@r.Address</span>
+                                    </td>
+                                    <td>
+                                        @if (r.Status == "Scheduled")
+                                        {
+                                            <span class="badge bg-info text-white rounded-pill px-3 py-1 mb-1">Scheduled</span>
+                                            @if (r.ScheduledDate.HasValue)
+                                            {
+                                                <small class="d-block text-success fw-bold">Arrival: @r.ScheduledDate.Value.ToString("g")</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark rounded-pill px-3 py-1">Pending Store Acceptance</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="text-muted small">Awaiting Logistics</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-secondary">
+                    <i class="bi bi-calendar-check fs-1 text-success"></i>
+                    <h5 class="fw-bold mt-3 text-dark-emphasis">No Active Requests</h5>
+                    <p class="small text-secondary">All your previous pickups are complete or cancelled. Throw some waste to start recycling!</p>
+                    <a asp-action="ThrowWaste" class="btn btn-success rounded-pill px-4 mt-2">Throw Waste Now</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

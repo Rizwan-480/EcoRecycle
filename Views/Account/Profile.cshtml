@@ -1,0 +1,248 @@
+@model EcoRecycle.Models.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row py-4">
+    <div class="col-lg-10 mx-auto">
+        <h2 class="fw-bold text-success-emphasis mb-4"><i class="bi bi-person-gear me-2"></i>Account Profile Settings</h2>
+        
+        <div class="row g-4">
+            <!-- Left Side: Profile overview & avatar card -->
+            <div class="col-md-4">
+                <div class="glass-card text-center p-4 shadow-sm mb-4">
+                    <div class="position-relative d-inline-block mb-3">
+                        @if (!string.IsNullOrEmpty(Model.AvatarUrl) && Model.AvatarUrl != "/images/default-avatar.png")
+                        {
+                            <img src="@Model.AvatarUrl" alt="Avatar" class="rounded-circle border border-success border-2 shadow" style="width: 140px; height: 140px; object-fit: cover;" id="avatarPreview" />
+                        }
+                        else
+                        {
+                            var initialName = Model.FullName ?? Model.Username ?? "?";
+                            var firstLetter = initialName.Trim().Length > 0 ? initialName.Trim().Substring(0, 1).ToUpper() : "?";
+                            <div class="rounded-circle border border-success border-2 shadow bg-success text-white d-flex align-items-center justify-content-center fw-bold fs-1" style="width: 140px; height: 140px;" id="avatarFallback">
+                                @firstLetter
+                            </div>
+                            <img id="avatarPreview" class="rounded-circle border border-success border-2 shadow d-none" style="width: 140px; height: 140px; object-fit: cover;" alt="Avatar Preview" />
+                        }
+                        <label for="avatarFileInput" class="btn btn-sm btn-success rounded-circle position-absolute bottom-0 end-0 p-2 shadow" style="width: 38px; height: 38px;" title="Upload Avatar">
+                            <i class="bi bi-camera-fill"></i>
+                        </label>
+                    </div>
+                    <h4 class="fw-bold m-0">@Model.FullName</h4>
+                    <p class="text-secondary small">@@@Model.Username</p>
+                    
+                    <span class="badge @(Model.RoleName == "Admin" ? "bg-danger" : Model.RoleName == "RecyclingStore" ? "bg-primary" : "bg-success") px-3 py-2 fs-6 rounded-pill mb-3">
+                        @Model.RoleName
+                    </span>
+
+                    @if (Model.RoleName == "User")
+                    {
+                        <div class="bg-success-subtle border border-success-subtle text-success-emphasis rounded-4 p-3 mb-2">
+                            <i class="bi bi-award fs-3 d-block mb-1"></i>
+                            <span class="small d-block text-secondary">My Reward Points</span>
+                            <span class="fs-4 fw-bold">@Model.RewardPoints pts</span>
+                        </div>
+                    }
+                    else if (Model.RoleName == "RecyclingStore")
+                    {
+                        <div class="bg-body-secondary border rounded-4 p-3">
+                            <span class="small d-block text-secondary">Approval Status</span>
+                            @if (Model.IsApproved)
+                            {
+                                <span class="badge bg-success py-2 px-3 rounded-pill mt-1"><i class="bi bi-patch-check-fill me-1"></i> Approved / Live</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark py-2 px-3 rounded-pill mt-1"><i class="bi bi-clock me-1"></i> Pending Approval</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Right Side: Edit profile inputs -->
+            <div class="col-md-8">
+                <div class="glass-card p-4 p-md-5 shadow-sm">
+                    <form asp-action="Profile" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+                        
+                        <input type="file" name="avatarFile" id="avatarFileInput" accept=".jpg,.jpeg,.png" style="display: none;" onchange="previewImage(event)" />
+
+                        @if (!string.IsNullOrEmpty(Model.AvatarUrl) && Model.AvatarUrl != "/images/default-avatar.png")
+                        {
+                            <div class="mb-4 p-3 border rounded-4 bg-body-tertiary d-flex align-items-center justify-content-between">
+                                <div class="form-check m-0">
+                                    <input asp-for="RemoveAvatar" type="checkbox" class="form-check-input" id="removeAvatarCheck" />
+                                    <label class="form-check-label fw-semibold text-danger small" for="removeAvatarCheck">Remove profile picture</label>
+                                </div>
+                                <span class="text-secondary small text-end">Check this to delete your current avatar.</span>
+                            </div>
+                        }
+
+                        <h5 class="fw-bold text-success border-bottom pb-2 mb-3">Personal Information</h5>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium text-secondary">Username (ReadOnly)</label>
+                                <input asp-for="Username" class="form-control bg-body-secondary" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium text-secondary">Email Address (ReadOnly)</label>
+                                <input asp-for="Email" class="form-control bg-body-secondary" readonly />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label fw-semibold">Display / Profile Name</label>
+                            <input asp-for="FullName" class="form-control" required />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        @if (Model.RoleName == "User")
+                        {
+                            <div class="mb-3">
+                                <label asp-for="Address" class="form-label fw-semibold">Home Address</label>
+                                <input asp-for="Address" class="form-control" id="profileAddress" />
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label asp-for="Latitude" class="form-label fw-semibold">Latitude</label>
+                                    <input asp-for="Latitude" type="number" step="any" class="form-control" id="profileLat" readonly />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Longitude" class="form-label fw-semibold">Longitude</label>
+                                    <input asp-for="Longitude" type="number" step="any" class="form-control" id="profileLng" readonly />
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.RoleName == "RecyclingStore")
+                        {
+                            <h5 class="fw-bold text-success border-bottom pb-2 mb-3 mt-4">Store Profile Details</h5>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label asp-for="StoreName" class="form-label fw-semibold">Store Name</label>
+                                    <input asp-for="StoreName" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="StoreContactNumber" class="form-label fw-semibold">Store Contact Number</label>
+                                    <input asp-for="StoreContactNumber" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="StoreAddress" class="form-label fw-semibold">Store Address</label>
+                                <input asp-for="StoreAddress" class="form-control" />
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label asp-for="StoreOperatingHours" class="form-label fw-semibold">Operating Hours</label>
+                                    <input asp-for="StoreOperatingHours" class="form-control" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label asp-for="StoreLatitude" class="form-label fw-semibold">Latitude</label>
+                                    <input asp-for="StoreLatitude" type="number" step="any" class="form-control" id="profileLat" readonly />
+                                </div>
+                                <div class="col-md-3">
+                                    <label asp-for="StoreLongitude" class="form-label fw-semibold">Longitude</label>
+                                    <input asp-for="StoreLongitude" type="number" step="any" class="form-control" id="profileLng" readonly />
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Coordinates picker Leaflet map -->
+                        @if (Model.RoleName == "User" || Model.RoleName == "RecyclingStore")
+                        {
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Pin Location on Map</label>
+                                <div id="profileMap" style="height: 250px; border-radius: 12px; border: 1px solid var(--border-color);"></div>
+                            </div>
+                        }
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-eco rounded-pill px-4"><i class="bi bi-save me-1"></i> Save Details</button>
+                        </div>
+                    </form>
+
+                    <form asp-action="ChangePassword" method="post" class="mt-5 border-top pt-4">
+                        @Html.AntiForgeryToken()
+                        <h5 class="fw-bold text-success border-bottom pb-2 mb-3">Security Settings (Change Password)</h5>
+                        <div class="mb-3">
+                            <label asp-for="CurrentPassword" class="form-label fw-medium">Current Password</label>
+                            <input asp-for="CurrentPassword" type="password" class="form-control" placeholder="Enter current password" />
+                            <span asp-validation-for="CurrentPassword" class="text-danger small"></span>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label asp-for="NewPassword" class="form-label fw-medium">New Password</label>
+                                <input asp-for="NewPassword" type="password" class="form-control" placeholder="Enter new password" />
+                                <span asp-validation-for="NewPassword" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ConfirmNewPassword" class="form-label fw-medium">Confirm New Password</label>
+                                <input asp-for="ConfirmNewPassword" type="password" class="form-control" placeholder="Confirm new password" />
+                                <span asp-validation-for="ConfirmNewPassword" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-outline-success rounded-pill px-4"><i class="bi bi-key-fill me-1"></i> Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function(){
+                const output = document.getElementById('avatarPreview');
+                output.src = reader.result;
+                output.classList.remove('d-none');
+                
+                const fallback = document.getElementById('avatarFallback');
+                if (fallback) {
+                    fallback.classList.add('d-none');
+                }
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const latInput = document.getElementById("profileLat");
+            const lngInput = document.getElementById("profileLng");
+            const profileMapDiv = document.getElementById("profileMap");
+
+            if (profileMapDiv && latInput && lngInput) {
+                // If coordinates exist, use them, otherwise default to Hyderabad coordinates
+                const lat = parseFloat(latInput.value) || 17.385044;
+                const lng = parseFloat(lngInput.value) || 78.486671;
+
+                const map = L.map('profileMap').setView([lat, lng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+
+                marker.on('dragend', function (event) {
+                    const position = marker.getLatLng();
+                    updateInputs(position.lat, position.lng);
+                });
+
+                map.on('click', function (event) {
+                    marker.setLatLng(event.latlng);
+                    updateInputs(event.latlng.lat, event.latlng.lng);
+                });
+
+                function updateInputs(lLatitude, lLongitude) {
+                    latInput.value = parseFloat(lLatitude).toFixed(6);
+                    lngInput.value = parseFloat(lLongitude).toFixed(6);
+                }
+            }
+        });
+    </script>
+}

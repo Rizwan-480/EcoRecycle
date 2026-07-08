@@ -1,0 +1,224 @@
+@{
+    ViewData["Title"] = "Reward Catalog";
+    var rewards = ViewBag.Rewards as List<EcoRecycle.Models.Reward>;
+    var redemptions = ViewBag.Redemptions as List<EcoRecycle.Models.RewardTransaction>;
+    int userPoints = ViewBag.UserPoints;
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-gift-fill me-2"></i>Eco Reward Store</h2>
+            <p class="text-secondary m-0">Redeem your earned recycling points for sustainable daily goods.</p>
+        </div>
+        <div class="glass-card bg-success-subtle text-success-emphasis border-success-subtle py-2 px-4 shadow-sm">
+            <span class="small d-block text-secondary text-uppercase fw-bold text-center">My Points</span>
+            <span class="fs-4 fw-extrabold text-success text-center d-block" id="userPointsEl">@userPoints pts</span>
+        </div>
+    </div>
+</div>
+
+<!-- Reward Catalog Grid -->
+<div class="row g-4 mb-5">
+    @if (rewards != null && rewards.Count > 0)
+    {
+        foreach (var item in rewards)
+        {
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-body-tertiary">
+                    <!-- Image Mockup -->
+                    <div class="py-5 bg-success text-center text-white">
+                        <i class="bi bi-gift display-4"></i>
+                    </div>
+                    <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">@item.PointsCost pts</span>
+                                <span class="small text-secondary">Stock: @item.StockCount</span>
+                            </div>
+                            <h5 class="card-title fw-bold my-2 text-primary-emphasis">@item.Name</h5>
+                            <p class="card-text text-secondary small">@item.Description</p>
+                        </div>
+                        
+                        <button class="btn btn-eco btn-sm w-100 rounded-pill py-2 mt-4 btn-redeem" data-id="@item.RewardID" data-name="@item.Name" data-cost="@item.PointsCost" @(userPoints < item.PointsCost || item.StockCount <= 0 ? "disabled" : "")>
+                            <i class="bi bi-gift me-1"></i> Redeem Item
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!-- My Redemptions Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="glass-card p-4 shadow-sm">
+            <h5 class="fw-bold mb-4 text-success-emphasis"><i class="bi bi-clock-history me-2"></i>My Redemptions</h5>
+            @if (redemptions != null && redemptions.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Redeemed Date</th>
+                                <th>Reward Item</th>
+                                <th>Points Spent</th>
+                                <th>Verification Code</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tx in redemptions)
+                            {
+                                <tr>
+                                    <td>@tx.RedeemDate.ToString("MMM dd, yyyy")</td>
+                                    <td><strong class="text-primary-emphasis">@tx.RewardName</strong></td>
+                                    <td><span class="text-danger-emphasis fw-semibold">-@tx.PointsSpent pts</span></td>
+                                    <td><code>@tx.VerificationCode</code></td>
+                                    <td>
+                                        <span class="badge @(tx.Status == "Redeemed" ? "bg-success" : "bg-warning text-dark") rounded-pill px-3 py-1">
+                                            @(tx.Status == "Redeemed" ? "Approved" : "Waiting for Admin's Approval")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-success rounded-pill px-3 btn-show-qr" data-code="@tx.VerificationCode" data-name="@tx.RewardName" data-status="@tx.Status">
+                                            <i class="bi bi-qr-code-scan me-1"></i> Show QR
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-secondary text-center py-4">You have not redeemed any rewards yet.</p>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal: QR Code Redemption -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-5">
+                <i class="bi bi-gift-fill text-success display-3 mb-3 d-inline-block"></i>
+                <h4 class="fw-bold text-success-emphasis mb-2" id="modalRewardName">Reward Name</h4>
+                <p class="text-secondary small">Present this QR Code or verification code to any administrator to claim your reward item.</p>
+                
+                <!-- QR Code Target -->
+                <div class="d-flex justify-content-center my-4">
+                    <div id="qrcode" class="p-3 border rounded-4 bg-white" style="width: auto;"></div>
+                </div>
+                
+                <h5 class="fw-bold mb-3"><code id="modalVerificationCode">ECO-XXXX</code></h5>
+                <span class="badge rounded-pill px-4 py-2 fs-6 mb-3" id="modalStatusBadge">Pending</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const qrModalEl = document.getElementById("qrModal");
+            const qrModal = new bootstrap.Modal(qrModalEl);
+            const qrTarget = document.getElementById("qrcode");
+            
+            // Modal fields
+            const modalName = document.getElementById("modalRewardName");
+            const modalCode = document.getElementById("modalVerificationCode");
+            const modalStatus = document.getElementById("modalStatusBadge");
+
+            let qrCodeGenerator = null;
+
+            // Redeem Event Handler
+            const redeemButtons = document.querySelectorAll(".btn-redeem");
+            redeemButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    const rewardId = btn.dataset.id;
+                    const cost = parseInt(btn.dataset.cost);
+                    const name = btn.dataset.name;
+
+                    if (!confirm(`Are you sure you want to redeem ${name} for ${cost} points?`)) return;
+
+                    btn.disabled = true;
+
+                    // Trigger redemption AJAX
+                    fetch(`/User/RedeemReward?rewardId=${rewardId}`, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToastNotification(data.message, "success");
+                            // Update points display
+                            const pointsEl = document.getElementById("userPointsEl");
+                            if (pointsEl) {
+                                const currentPts = parseInt(pointsEl.innerText);
+                                pointsEl.innerText = `${currentPts - cost} pts`;
+                            }
+                            
+                            // Show QR Code in modal
+                            modalName.innerText = name;
+                            modalCode.innerText = data.code;
+                            modalStatus.innerText = "Waiting for Admin's Approval";
+                            modalStatus.className = "badge bg-warning text-dark rounded-pill px-4 py-2 fs-6 mb-3";
+                            
+                            // Clear and generate QR using public API
+                            qrTarget.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data.code)}" alt="QR Code" class="img-fluid" />`;
+                            
+                            qrModal.show();
+                            
+                            // Reload page after modal dismiss to refresh list
+                            qrModalEl.addEventListener('hidden.bs.modal', function () {
+                                window.location.reload();
+                            }, { once: true });
+                        } else {
+                            btn.disabled = false;
+                            showToastNotification(data.message, "error");
+                        }
+                    })
+                    .catch(err => {
+                        btn.disabled = false;
+                        showToastNotification("Redemption failed. Try again.", "error");
+                        console.error(err);
+                    });
+                });
+            });
+
+            // Show QR from List Event Handler
+            const qrListButtons = document.querySelectorAll(".btn-show-qr");
+            qrListButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    const code = btn.dataset.code;
+                    const name = btn.dataset.name;
+                    const status = btn.dataset.status;
+
+                    modalName.innerText = name;
+                    modalCode.innerText = code;
+                    
+                    if (status === "Redeemed") {
+                        modalStatus.innerText = "Approved";
+                        modalStatus.className = "badge bg-success rounded-pill px-4 py-2 fs-6 mb-3";
+                    } else {
+                        modalStatus.innerText = "Waiting for Admin's Approval";
+                        modalStatus.className = "badge bg-warning text-dark rounded-pill px-4 py-2 fs-6 mb-3";
+                    }
+
+                    // Clear and generate QR using public API
+                    qrTarget.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(code)}" alt="QR Code" class="img-fluid" />`;
+
+                    qrModal.show();
+                });
+            });
+        });
+    </script>
+}

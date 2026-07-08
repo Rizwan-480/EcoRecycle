@@ -1,0 +1,157 @@
+@model EcoRecycle.Models.ViewModels.VerifyRedemptionViewModel
+@{
+    ViewData["Title"] = "QR Verification";
+}
+
+<div class="row py-4">
+    <div class="col-lg-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-qr-code-scan me-2"></i>QR Redemption Verification</h2>
+                <p class="text-secondary m-0">Verify user reward transactions. Confirm codes to mark items as claimed.</p>
+            </div>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i> Back to Dashboard</a>
+        </div>
+
+        <div class="glass-card p-4 p-md-5 shadow-sm mb-4">
+            <h5 class="fw-bold mb-3 text-success-emphasis">Scan / Search Redemption Code</h5>
+            
+            <form asp-action="SearchVerification" method="post" class="row g-3 align-items-end mb-4">
+                @Html.AntiForgeryToken()
+                <div class="col-sm-9">
+                    <label asp-for="VerificationCode" class="form-label fw-medium text-secondary">Verification Code (e.g. ECO-XXXX)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-body"><i class="bi bi-search text-secondary"></i></span>
+                        <input asp-for="VerificationCode" class="form-control" placeholder="Type or paste redemption code" required />
+                    </div>
+                    <span asp-validation-for="VerificationCode" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-3">
+                    <button type="submit" class="btn btn-eco w-100 py-2">Search Code</button>
+                </div>
+            </form>
+
+            <hr class="my-4">
+
+            <!-- Verification Outcomes -->
+            @if (Model.VerificationResult.HasValue)
+            {
+                if (Model.VerificationResult.Value == -1)
+                {
+                    <div class="alert alert-danger border-danger-subtle rounded-4 p-4 text-center" role="alert">
+                        <i class="bi bi-x-circle-fill text-danger display-5 mb-2 d-block"></i>
+                        <h5 class="alert-heading fw-bold">Redemption Code Not Found</h5>
+                        <p class="mb-0">Please check the code carefully. Ensure there are no typo errors in characters.</p>
+                    </div>
+                }
+                else if (Model.VerificationResult.Value == -2 && Model.Transaction != null)
+                {
+                    <div class="alert alert-warning border-warning-subtle rounded-4 p-4 text-center" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill text-warning display-5 mb-2 d-block"></i>
+                        <h5 class="alert-heading fw-bold">Reward Already Verified & Claimed</h5>
+                        <p class="mb-0">This redemption code was claimed on <strong>@Model.Transaction.RedeemDate.ToString("g")</strong> by client <strong>@Model.Transaction.UserFullName</strong>.</p>
+                    </div>
+                }
+            }
+            else if (Model.Transaction != null)
+            {
+                <!-- Pending transaction review -->
+                <div class="border rounded-4 p-4 bg-success-subtle bg-opacity-10 border-success-subtle">
+                    <h5 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="bi bi-info-circle me-1"></i>Redemption Details</h5>
+                    
+                    <table class="table table-borderless align-middle mb-4">
+                        <tbody>
+                            <tr>
+                                <td class="text-secondary small fw-medium" style="width: 150px;">Verification Code:</td>
+                                <td><code>@Model.Transaction.VerificationCode</code></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary small fw-medium">Reward Item:</td>
+                                <td class="fw-bold text-primary-emphasis">@Model.Transaction.RewardName</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary small fw-medium">Points Deducted:</td>
+                                <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3">@Model.Transaction.PointsSpent pts</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary small fw-medium">Redeemed By:</td>
+                                <td>
+                                    <span class="fw-bold text-dark-emphasis">@Model.Transaction.UserFullName</span>
+                                    <small class="text-secondary">(@@@Model.Transaction.Username)</small>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary small fw-medium">Status:</td>
+                                <td>
+                                    <span class="badge bg-warning text-dark px-3 py-1 rounded-pill">
+                                        @Model.Transaction.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <form asp-action="ConfirmVerification" method="post" class="text-center">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="code" value="@Model.Transaction.VerificationCode" />
+                        <button type="submit" class="btn btn-success btn-lg px-5 py-3 rounded-pill fw-bold shadow-sm"><i class="bi bi-patch-check-fill me-2"></i> Confirm & Complete Redemption</button>
+                    </form>
+                </div>
+            }
+        </div>
+
+        <!-- Pending Approvals Queue -->
+        <div class="glass-card p-4 p-md-5 shadow-sm">
+            <h5 class="fw-bold mb-3 text-success-emphasis"><i class="bi bi-clock-history me-2"></i>Pending Approvals</h5>
+            <p class="text-secondary small mb-4">Click "Approve & Complete" next to any pending reward request to confirm it immediately without typing the code.</p>
+
+            @if (Model.PendingTransactions != null && Model.PendingTransactions.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Client Name</th>
+                                <th>Reward Item</th>
+                                <th>Points Cost</th>
+                                <th>Code</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tx in Model.PendingTransactions)
+                            {
+                                <tr>
+                                    <td class="small">@tx.RedeemDate.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        <strong class="text-primary-emphasis d-block">@tx.UserFullName</strong>
+                                        <small class="text-secondary">@@@tx.Username</small>
+                                    </td>
+                                    <td><span class="fw-bold text-dark-emphasis">@tx.RewardName</span></td>
+                                    <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2">@tx.PointsSpent pts</span></td>
+                                    <td><code>@tx.VerificationCode</code></td>
+                                    <td class="text-end">
+                                        <form asp-action="ConfirmVerification" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="code" value="@tx.VerificationCode" />
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3"><i class="bi bi-check-circle-fill me-1"></i> Approve & Complete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-secondary">
+                    <i class="bi bi-gift fs-1 text-success opacity-50"></i>
+                    <h6 class="fw-bold mt-3 text-dark-emphasis">No Pending Approvals</h6>
+                    <p class="small text-secondary mb-0">All points redemption transactions have been processed and approved.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

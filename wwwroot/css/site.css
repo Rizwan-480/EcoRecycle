@@ -1,0 +1,280 @@
+/* EcoRecycle System Core Styling */
+/* Premium design system utilizing custom theme tokens and CSS variables */
+
+:root {
+    /* Light Mode Palette */
+    --bg-primary: #f5f7fa;
+    --bg-secondary: #ffffff;
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --card-border: rgba(255, 255, 255, 0.4);
+    --text-primary: #2b3a4a;
+    --text-secondary: #607d8b;
+    --accent: #198754;
+    --accent-glow: rgba(25, 135, 84, 0.2);
+    --accent-hover: #146c43;
+    --border-color: #e2e8f0;
+    --shadow-color: rgba(148, 163, 184, 0.1);
+    
+    --dashboard-grad-1: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    --dashboard-grad-2: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    --dashboard-grad-3: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+[data-bs-theme="dark"] {
+    /* Dark Mode Palette */
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --card-border: rgba(255, 255, 255, 0.05);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent: #22c55e;
+    --accent-glow: rgba(34, 197, 94, 0.2);
+    --accent-hover: #16a34a;
+    --border-color: #334155;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    
+    --dashboard-grad-1: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --dashboard-grad-2: linear-gradient(135deg, #022c22 0%, #064e3b 100%);
+    --dashboard-grad-3: linear-gradient(135deg, #451a03 0%, #78350f 100%);
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+/* Glassmorphism Card System */
+.glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 var(--shadow-color);
+    padding: 1.5rem;
+    transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px 0 var(--shadow-color);
+}
+
+/* Buttons and Micro-animations */
+.btn-eco {
+    background-color: var(--accent);
+    color: #fff;
+    border-radius: 10px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    border: none;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 14px 0 var(--accent-glow);
+}
+
+.btn-eco:hover, .btn-eco:focus {
+    background-color: var(--accent-hover);
+    color: #fff;
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px 0 var(--accent-glow);
+}
+
+/* Timeline component for historical listings */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 5px;
+    bottom: 5px;
+    width: 2px;
+    background: var(--border-color);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 4px solid var(--bg-primary);
+    box-shadow: 0 0 0 2px var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.timeline-item.completed .timeline-marker {
+    background: #198754;
+}
+
+.timeline-item.pending .timeline-marker {
+    background: #ffc107;
+}
+
+.timeline-content {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid var(--card-border);
+}
+
+/* Custom Interactive Maps styling */
+#map {
+    height: 500px;
+    width: 100%;
+    border-radius: 16px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 8px 30px var(--shadow-color);
+}
+
+/* Notification badges and container styling */
+.nav-link-notification {
+    position: relative;
+}
+
+.notification-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: #dc3545;
+    color: white;
+    font-size: 0.65rem;
+    padding: 2px 5px;
+    border-radius: 50%;
+}
+
+/* Leaderboard custom stylings */
+.leaderboard-table th {
+    background-color: transparent;
+    color: var(--text-secondary);
+}
+
+.leaderboard-row {
+    transition: all 0.2s ease;
+}
+
+.leaderboard-row:hover {
+    background-color: var(--border-color);
+}
+
+.rank-pill {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: bold;
+}
+
+.rank-1 { background-color: #ffd700; color: #000; }
+.rank-2 { background-color: #c0c0c0; color: #000; }
+.rank-3 { background-color: #cd7f32; color: #000; }
+
+/* Custom Badge system for profile achievements */
+.badge-item {
+    text-align: center;
+    padding: 1rem;
+}
+
+.badge-icon {
+    font-size: 3rem;
+    color: var(--accent);
+    filter: drop-shadow(0 4px 6px var(--accent-glow));
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.badge-item:hover .badge-icon {
+    transform: rotate(15deg) scale(1.1);
+}
+
+/* Dark mode toggler button stylings */
+.theme-toggle-btn {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--border-color);
+    color: var(--text-primary);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+/* Charts responsive containers */
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 300px;
+    width: 100%;
+}
+
+/* Landing Page Hero banner styles */
+.hero-banner {
+    padding: 5rem 0;
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.05) 0%, rgba(20, 108, 67, 0.1) 100%);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.hero-highlight {
+    color: var(--accent);
+    position: relative;
+    display: inline-block;
+}
+
+/* Form Styling overrides */
+.form-control, .form-select {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.25rem var(--accent-glow);
+}
+
+/* Footer structure overrides */
+footer {
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}

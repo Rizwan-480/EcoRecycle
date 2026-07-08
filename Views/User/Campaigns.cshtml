@@ -1,0 +1,125 @@
+@model List<EcoRecycle.Models.Campaign>
+@{
+    ViewData["Title"] = "Eco Campaigns";
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-globe-americas me-2"></i>Environmental Campaigns</h2>
+        <p class="text-secondary m-0">Join active community campaigns. Your recycling weights contribute directly to campaign targets!</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    @if (Model != null && Model.Count > 0)
+    {
+        foreach (var camp in Model)
+        {
+            var percent = camp.TargetGoal > 0 ? (camp.CurrentProgress / camp.TargetGoal) * 100 : 0;
+            if (percent > 100) percent = 100;
+
+            <div class="col-md-6">
+                <div class="glass-card p-4 h-100 shadow-sm d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge @(camp.IsActive && camp.EndDate >= DateTime.Now ? "bg-success" : "bg-secondary") rounded-pill px-3 py-1">
+                                @(camp.IsActive && camp.EndDate >= DateTime.Now ? "Active" : "Completed / Ended")
+                            </span>
+                            <small class="text-secondary fw-semibold"><i class="bi bi-people me-1"></i> @camp.MemberCount participants</small>
+                        </div>
+                        
+                        <h4 class="fw-bold text-primary-emphasis mb-2">@camp.Name</h4>
+                        <p class="text-secondary small mb-4">@camp.Description</p>
+                        
+                        <!-- Progress info -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between small text-secondary-emphasis mb-1">
+                                <span>Progress: <strong>@camp.CurrentProgress.ToString("N1") Kg</strong> collected</span>
+                                <span>Target: @camp.TargetGoal.ToString("N0") Kg</span>
+                            </div>
+                            <div class="progress" style="height: 12px; border-radius: 6px;">
+                                <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: @percent%" aria-valuenow="@camp.CurrentProgress" aria-valuemin="0" aria-valuemax="@camp.TargetGoal"></div>
+                            </div>
+                            <div class="text-end small text-secondary mt-1">@percent.ToString("N1")% completed</div>
+                        </div>
+
+                        <!-- Date range info -->
+                        <div class="d-flex justify-content-between small text-secondary border-top pt-3 mb-4">
+                            <span><strong>Start:</strong> @camp.StartDate.ToString("MMM dd, yyyy")</span>
+                            <span><strong>End:</strong> @camp.EndDate.ToString("MMM dd, yyyy")</span>
+                        </div>
+                    </div>
+
+                    <!-- Join Campaign Button -->
+                    @if (camp.IsActive && camp.EndDate >= DateTime.Now)
+                    {
+                        if (camp.UserJoined)
+                        {
+                            <button class="btn btn-outline-success w-100 rounded-pill py-2" disabled>
+                                <i class="bi bi-patch-check-fill me-1"></i> Enrolled / Active Participant
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-eco w-100 rounded-pill py-2 btn-join-campaign" data-id="@camp.CampaignID">
+                                <i class="bi bi-person-plus me-1"></i> Join Campaign
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <button class="btn btn-secondary w-100 rounded-pill py-2" disabled>
+                            <i class="bi bi-lock me-1"></i> Campaign Closed
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12 text-center py-5 text-secondary">
+            <i class="bi bi-globe display-4"></i>
+            <p class="mt-2">No environmental campaigns are currently running.</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const joinButtons = document.querySelectorAll(".btn-join-campaign");
+            joinButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    const campaignId = btn.dataset.id;
+                    btn.disabled = true;
+
+                    fetch(`/User/JoinCampaign?campaignId=${campaignId}`, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToastNotification(data.message, "success");
+                            
+                            // Change button state instantly
+                            btn.className = "btn btn-outline-success w-100 rounded-pill py-2";
+                            btn.innerHTML = '<i class="bi bi-patch-check-fill me-1"></i> Enrolled / Active Participant';
+                            
+                            // Refresh page after a short delay to update count
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            btn.disabled = false;
+                            showToastNotification(data.message, "error");
+                        }
+                    })
+                    .catch(err => {
+                        btn.disabled = false;
+                        showToastNotification("Error joining campaign.", "error");
+                        console.error(err);
+                    });
+                });
+            });
+        });
+    </script>
+}

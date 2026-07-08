@@ -1,0 +1,173 @@
+@model EcoRecycle.Models.ViewModels.StoreDashboardViewModel
+@{
+    ViewData["Title"] = "Store Dashboard";
+    var assignedPickups = ViewBag.RecentPickups as List<EcoRecycle.Models.PickupRequest>;
+}
+
+<!-- Pending Approval Warning -->
+@if (!Model.IsApproved)
+{
+    <div class="alert alert-warning border-warning-subtle rounded-4 shadow-sm p-4 mb-5" role="alert">
+        <h4 class="alert-heading fw-bold"><i class="bi bi-clock-history me-2"></i>Registration Pending Approval</h4>
+        <p class="mb-0">Your recycling store account for <strong>@Model.StoreName</strong> is currently under administrative review. Once approved, you will receive a notification and can start accepting pickup requests from nearby users.</p>
+    </div>
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold m-0"><i class="bi bi-speedometer text-success me-2"></i>Recycling Store Dashboard</h2>
+        <p class="text-secondary m-0">Manage your collection queues, schedule logistics, and track recycling weights.</p>
+    </div>
+</div>
+
+<!-- Widgets Row -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3 col-sm-6">
+        <div class="glass-card p-4 h-100 bg-success-subtle text-success-emphasis border border-success-subtle">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="text-secondary small text-uppercase fw-bold m-0">Total Weight</h6>
+                    <span class="display-6 fw-extrabold text-success">@Model.TotalWeightCollected <span class="fs-6">Kg</span></span>
+                </div>
+                <div class="fs-2"><i class="bi bi-recycle"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="glass-card p-4 h-100 bg-primary-subtle text-primary-emphasis border border-primary-subtle">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="text-secondary small text-uppercase fw-bold m-0">Assigned Pickups</h6>
+                    <span class="display-6 fw-extrabold text-primary">@Model.TotalAssigned</span>
+                </div>
+                <div class="fs-2"><i class="bi bi-calendar-check"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="glass-card p-4 h-100 bg-info-subtle text-info-emphasis border border-info-subtle">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="text-secondary small text-uppercase fw-bold m-0">Scheduled</h6>
+                    <span class="display-6 fw-extrabold text-info">@Model.TotalScheduled</span>
+                </div>
+                <div class="fs-2"><i class="bi bi-calendar-event"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="glass-card p-4 h-100 bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="text-secondary small text-uppercase fw-bold m-0">Completed</h6>
+                    <span class="display-6 fw-extrabold text-warning">@Model.TotalCompleted</span>
+                </div>
+                <div class="fs-2"><i class="bi bi-check2-all"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Active Assigned Pickups -->
+    <div class="col-lg-8">
+        <div class="glass-card p-4 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-calendar-week me-2"></i>Active Collection Pickups</h5>
+                <a asp-action="Queue" class="btn btn-sm btn-success rounded-pill px-3"><i class="bi bi-search me-1"></i> Browse Queue</a>
+            </div>
+
+            @if (assignedPickups != null && assignedPickups.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Pickup Address</th>
+                                <th>Schedule Date</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in assignedPickups)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary-emphasis d-block">@p.UserFullName</strong>
+                                        <small class="text-secondary">@p.UserEmail</small>
+                                    </td>
+                                    <td>
+                                        <span class="text-truncate-2 d-inline-block small" style="max-width: 180px;">@p.Address</span>
+                                    </td>
+                                    <td>
+                                        @if (p.ScheduledDate.HasValue)
+                                        {
+                                            <span class="fw-bold text-dark-emphasis small">@p.ScheduledDate.Value.ToString("g")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Not scheduled</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @(p.Status == "Completed" ? "bg-success" : p.Status == "Scheduled" ? "bg-info text-white" : p.Status == "Accepted" ? "bg-primary" : "bg-warning text-dark") rounded-pill px-3 py-1">
+                                            @p.Status
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <a asp-action="Details" asp-route-id="@p.PickupID" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Manage</a>
+                                            @if (p.Status == "Scheduled" || p.Status == "Accepted")
+                                            {
+                                                <a asp-action="Complete" asp-route-id="@p.PickupID" class="btn btn-sm btn-success rounded-pill px-3">Complete</a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-secondary">
+                    <i class="bi bi-calendar-x fs-1"></i>
+                    <p class="mt-2">No active pickup requests are assigned to your center.</p>
+                    @if (Model.IsApproved)
+                    {
+                        <a asp-action="Queue" class="btn btn-outline-success btn-sm rounded-pill px-4 mt-2">Browse Pending Queue</a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right: Category distribution chart mockup -->
+    <div class="col-lg-4">
+        <div class="glass-card p-4 shadow-sm h-100">
+            <h5 class="fw-bold mb-4 text-success-emphasis"><i class="bi bi-pie-chart me-2"></i>Waste Distribution</h5>
+            <div class="d-flex flex-column gap-3">
+                @foreach (var c in Model.CategoryStats)
+                {
+                    <div>
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="fw-medium">@c.CategoryName</span>
+                            <span class="fw-bold">@c.TotalWeight.ToString("N1") Kg</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: @(Model.TotalWeightCollected > 0 ? (c.TotalWeight / Model.TotalWeightCollected) * 100 : 0)%"></div>
+                        </div>
+                    </div>
+                }
+                
+                @if (Model.TotalWeightCollected == 0)
+                {
+                    <p class="text-secondary small text-center my-5">No collection data to compute distributions.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

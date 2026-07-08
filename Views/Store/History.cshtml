@@ -1,0 +1,90 @@
+@model List<EcoRecycle.Models.PickupRequest>
+@{
+    ViewData["Title"] = "Completed Pickups History";
+}
+
+<div class="row py-4">
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-clock-history me-2"></i>Completed Collections</h2>
+            <p class="text-secondary m-0">Review historical log files of completed waste collections and weight summaries.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i> Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="glass-card p-3 bg-success-subtle text-success-emphasis border border-success-subtle d-flex justify-content-between align-items-center">
+            <div>
+                <span class="small d-block text-secondary text-uppercase fw-bold">Total Weight Collected</span>
+                <span class="fs-3 fw-extrabold text-success">@ViewBag.TotalWeight Kg</span>
+            </div>
+            <i class="bi bi-truck fs-1"></i>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="glass-card p-3 bg-primary-subtle text-primary-emphasis border border-primary-subtle d-flex justify-content-between align-items-center">
+            <div>
+                <span class="small d-block text-secondary text-uppercase fw-bold">Total Points Disbursed</span>
+                <span class="fs-3 fw-extrabold text-primary">@ViewBag.TotalEarned pts</span>
+            </div>
+            <i class="bi bi-award fs-1"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="glass-card p-4 shadow-sm">
+            @if (Model != null && Model.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Completion Date</th>
+                                <th>Client Profile</th>
+                                <th>Collection Address</th>
+                                <th>Weight</th>
+                                <th>Points Disbursed</th>
+                                <th class="text-end">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="d-block fw-semibold text-primary-emphasis">@p.UpdatedAt.ToString("MMM dd, yyyy")</span>
+                                        <small class="text-secondary">@p.UpdatedAt.ToString("t")</small>
+                                    </td>
+                                    <td>
+                                        <strong class="text-primary-emphasis">@p.UserFullName</strong>
+                                        <small class="d-block text-secondary">@p.UserEmail</small>
+                                    </td>
+                                    <td>
+                                        <span class="text-truncate-2 d-inline-block small" style="max-width: 250px;">@p.Address</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">@p.TotalWeight.Value.ToString("N1") Kg</span>
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">+@p.TotalPoints pts</strong>
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="Details" asp-route-id="@p.PickupID" class="btn btn-sm btn-outline-secondary rounded-pill px-3">View Details</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-secondary text-center py-5">No completed pickups in your historical log.</p>
+            }
+        </div>
+    </div>
+</div>

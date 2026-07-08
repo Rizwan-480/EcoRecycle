@@ -1,0 +1,563 @@
+@model EcoRecycle.Models.ViewModels.ThrowWasteViewModel
+@{
+    ViewData["Title"] = "Throw Waste & Request Pickup";
+    var categories = ViewBag.Categories as List<EcoRecycle.Models.WasteCategory>;
+    var stores = ViewBag.Stores as List<EcoRecycle.Models.Store>;
+    var user = ViewBag.User as EcoRecycle.Models.User;
+}
+
+<div class="row py-4">
+    <div class="col-lg-9 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-trash3 me-2"></i>Throw Waste to Store</h2>
+                <p class="text-secondary m-0">Upload a photo to let our AI identify the category, then pick your nearest recycling store.</p>
+            </div>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i> Back</a>
+        </div>
+
+        <!-- STAGE 1: AI Waste Classification Upload -->
+        <div id="classificationStage" class="glass-card p-4 p-md-5 text-center shadow-sm mb-4">
+            <i class="bi bi-cloud-arrow-up display-3 text-success mb-3 d-inline-block"></i>
+            <h4 class="fw-bold text-dark-emphasis">Step 1: Upload Waste Image</h4>
+            <p class="text-secondary mb-4 mx-auto" style="max-width: 500px;">
+                Snap a photo or drag & drop an image of your recycling waste. The AI will classify it instantly.
+            </p>
+
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-7">
+                    <div id="dropZone" class="p-5 border border-dashed rounded-4 bg-body-tertiary text-center mb-3 cursor-pointer">
+                        <i class="bi bi-camera fs-1 text-secondary mb-2 d-block"></i>
+                        <span class="small text-secondary-emphasis d-block mb-3">Drag & drop your file here, or click to browse</span>
+                        <input type="file" id="imageFileInput" class="d-none" accept=".jpg,.jpeg,.png" />
+                        <button type="button" class="btn btn-success btn-sm rounded-pill px-4" id="btnBrowse">Browse File</button>
+                    </div>
+                    
+                    <div id="uploadSpinner" class="d-none my-3 text-center">
+                        <div class="spinner-border text-success" role="status"></div>
+                        <p class="small text-secondary mt-2">AI is identifying your waste... Please wait...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STAGE 2: Request Details & Store Selector (Form) -->
+        <div id="detailsStage" class="d-none">
+            <form asp-action="ThrowWaste" method="post" id="throwWasteForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                <!-- Coords hidden fields -->
+                <input type="hidden" asp-for="Latitude" id="userLatInput" />
+                <input type="hidden" asp-for="Longitude" id="userLngInput" />
+
+                <div class="row g-4">
+                    <!-- Left Column: Image, Category, Weight, Map -->
+                    <div class="col-md-6">
+                        <div class="glass-card p-4 shadow-sm mb-4">
+                            <h5 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="bi bi-info-circle me-1"></i>Waste Details</h5>
+                            
+                            <div class="text-center bg-body-secondary p-3 rounded-4 mb-3 position-relative overflow-hidden" style="max-height: 250px;">
+                                <img id="uploadedImagePreview" src="" class="img-fluid rounded-3" style="max-height: 220px; object-fit: contain;" alt="Waste Preview" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">AI Classified Category</label>
+                                <div id="aiSpinner" class="p-3 border rounded-4 text-center bg-body-tertiary">
+                                    <span class="spinner-border spinner-border-sm text-success me-2 align-middle"></span>
+                                    <span class="small text-secondary-emphasis align-middle">Running client-side TensorFlow.js MobileNet neural net...</span>
+                                </div>
+                                <div id="aiCard" class="d-none p-3 border rounded-4 bg-success-subtle bg-opacity-25 border-success-subtle d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <strong id="aiCategoryName" class="text-success-emphasis">Plastic</strong>
+                                        <small id="aiConfidenceText" class="text-secondary d-block">Confidence: 94.2%</small>
+                                    </div>
+                                    <span class="badge bg-success">TF.js AI</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="CategoryID" class="form-label fw-semibold">Confirm / Select Waste Category</label>
+                                <select asp-for="CategoryID" class="form-select" id="categoryDropdown" required>
+                                    <option value="">-- Choose Category --</option>
+                                    @foreach (var c in categories)
+                                    {
+                                        <option value="@c.CategoryID" data-rate="@c.PointsPerKg">@c.Name (@c.PointsPerKg pts/Kg)</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="CategoryID" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="EstimatedWeight" class="form-label fw-semibold">Estimated Weight (Kg)</label>
+                                <div class="input-group">
+                                    <input asp-for="EstimatedWeight" type="number" step="0.01" min="0.01" class="form-control text-center" id="weightInput" placeholder="e.g. 5.5" required />
+                                    <span class="input-group-text bg-body">Kg</span>
+                                </div>
+                                <span asp-validation-for="EstimatedWeight" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Notes" class="form-label fw-semibold">Special Notes (Optional)</label>
+                                <input asp-for="Notes" class="form-control" placeholder="e.g. Packaged in cardboard boxes" />
+                            </div>
+
+                            <div id="pointsCalculationCard" class="d-none p-3 border rounded-4 bg-success-subtle bg-opacity-25 border-success-subtle text-center mb-3">
+                                <span class="small text-secondary d-block text-uppercase fw-bold">Points to Earn</span>
+                                <span class="fs-2 fw-extrabold text-success" id="mainPointsEstimate">0 points</span>
+                                <small class="text-secondary d-block mt-1">Based on estimated weight of <span id="confirmWeight">0</span> Kg</small>
+                            </div>
+
+                            <div class="mt-4">
+                                <button type="button" id="btnSaveDetails" class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm">
+                                    <i class="bi bi-calculator me-1"></i> Save & Calculate Points
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Address and Map coordinates block -->
+                        <div class="glass-card p-4 shadow-sm d-none" id="coordsCard">
+                            <h5 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="bi bi-geo-alt me-1"></i>Pickup Location Coordinates</h5>
+                            
+                            <div class="mb-3">
+                                <label asp-for="Address" class="form-label fw-semibold">Collection Street Address</label>
+                                <input asp-for="Address" class="form-control" placeholder="Enter collection address" id="userAddressInput" required />
+                                <span asp-validation-for="Address" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-semibold m-0">Pin Address Location</label>
+                                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill" id="btnLocateMe"><i class="bi bi-geo-alt-fill"></i> Locate Me</button>
+                                </div>
+                                <div id="mapPickup" style="height: 220px; border-radius: 12px; border: 1px solid var(--border-color);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Proximity Stores selector -->
+                    <div class="col-md-6 d-none" id="storeColumn">
+                        <div class="glass-card p-4 shadow-sm h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <h5 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="bi bi-shop-window me-1"></i>Select Nearest Store</h5>
+                                <input type="hidden" asp-for="StoreID" id="selectedStoreId" required />
+                                <span asp-validation-for="StoreID" class="text-danger small d-block mb-3"></span>
+
+                                @if (stores != null && stores.Count > 0)
+                                {
+                                    <div class="d-flex flex-column gap-3 overflow-y-auto mb-4" id="storeContainer" style="max-height: 480px;">
+                                        @foreach (var s in stores)
+                                        {
+                                            <div class="p-3 border rounded-4 bg-body-tertiary store-card cursor-pointer" data-id="@s.StoreID" data-lat="@s.Latitude" data-lng="@s.Longitude">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div>
+                                                        <strong class="text-primary-emphasis d-block store-name-title">@s.StoreName</strong>
+                                                        <span class="small text-secondary"><i class="bi bi-clock me-1"></i>@s.OperatingHours</span>
+                                                    </div>
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle distance-badge">Calculating...</span>
+                                                </div>
+                                                <small class="text-secondary d-block text-truncate mb-2">@s.StoreAddress</small>
+                                                
+                                                <div class="bg-body-secondary p-2 rounded-3 text-center d-flex justify-content-between align-items-center">
+                                                    <span class="small text-secondary-emphasis">Est. Reward Earnings:</span>
+                                                    <strong class="text-success est-earning-text">0 points</strong>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning rounded-4 border-warning-subtle text-center p-4">
+                                        <i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>
+                                        <h6 class="fw-bold">No registered stores available</h6>
+                                        <p class="small mb-0">There are currently no approved recycling centers live in your area.</p>
+                                    </div>
+                                }
+                            </div>
+
+                            <div>
+                                <button type="submit" class="btn btn-success btn-lg w-100 py-3 rounded-pill fw-bold shadow-sm" id="btnSubmitRequest" disabled>
+                                    <i class="bi bi-check-circle-fill me-2"></i> Request Pickup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Load TensorFlow.js Core and MobileNet model client-side -->
+    <script src="https://cdn.jsdelivr.net/npm/@@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@tensorflow-models/mobilenet@2.1.0/dist/mobilenet.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Coordinate points variables
+            let clientLat = parseFloat("@user?.Latitude") || 17.385044;
+            let clientLng = parseFloat("@user?.Longitude") || 78.486671;
+
+            const userLatInput = document.getElementById("userLatInput");
+            const userLngInput = document.getElementById("userLngInput");
+            userLatInput.value = clientLat.toFixed(6);
+            userLngInput.value = clientLng.toFixed(6);
+
+            // Leaflet Map variables
+            let map = null;
+            let marker = null;
+
+            // Categories options mapping for JS
+            const categoriesMap = {};
+            @foreach (var c in categories)
+            {
+                <text>categoriesMap["@c.Name.ToLower()"] = { id: parseInt("@c.CategoryID"), rate: parseInt("@c.PointsPerKg") };</text>
+            }
+
+            // UI Stages elements
+            const dropZone = document.getElementById("dropZone");
+            const fileInput = document.getElementById("imageFileInput");
+            const btnBrowse = document.getElementById("btnBrowse");
+            const spinner = document.getElementById("uploadSpinner");
+            const classificationStage = document.getElementById("classificationStage");
+            const detailsStage = document.getElementById("detailsStage");
+            
+            // AI response inputs
+            const imgPreview = document.getElementById("uploadedImagePreview");
+            const aiCategoryName = document.getElementById("aiCategoryName");
+            const aiConfidence = document.getElementById("aiConfidenceText");
+            const categoryDropdown = document.getElementById("categoryDropdown");
+            const weightInput = document.getElementById("weightInput");
+
+            // Event handlers for file upload zone
+            btnBrowse.addEventListener("click", () => fileInput.click());
+            fileInput.addEventListener("change", handleFileSelect);
+
+            dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("border-success"); });
+            dropZone.addEventListener("dragleave", () => dropZone.classList.remove("border-success"));
+            dropZone.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropZone.classList.remove("border-success");
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect();
+                }
+            });
+
+            let mobilenetModel = null;
+            async function loadMobileNetModel() {
+                if (!mobilenetModel) {
+                    mobilenetModel = await mobilenet.load();
+                }
+            }
+
+            function mapMobileNetLabel(label) {
+                label = label.toLowerCase();
+                if (label.includes("bottle") || label.includes("plastic") || label.includes("cup") || label.includes("bag") || label.includes("tub") || label.includes("container")) {
+                    return categoriesMap["plastic"] ? categoriesMap["plastic"].id : "";
+                }
+                if (label.includes("paper") || label.includes("cardboard") || label.includes("box") || label.includes("carton") || label.includes("book") || label.includes("notebook") || label.includes("magazine") || label.includes("newspaper")) {
+                    return categoriesMap["paper"] ? categoriesMap["paper"].id : "";
+                }
+                if (label.includes("glass") || label.includes("jar") || label.includes("goblet") || label.includes("decanter") || label.includes("mug")) {
+                    return categoriesMap["glass"] ? categoriesMap["glass"].id : "";
+                }
+                if (label.includes("can") || label.includes("tin") || label.includes("foil") || label.includes("metal") || label.includes("copper") || label.includes("brass") || label.includes("iron") || label.includes("pan") || label.includes("pot")) {
+                    return categoriesMap["metal"] ? categoriesMap["metal"].id : "";
+                }
+                if (label.includes("phone") || label.includes("computer") || label.includes("laptop") || label.includes("keyboard") || label.includes("mouse") || label.includes("screen") || label.includes("monitor") || label.includes("cable") || label.includes("wire") || label.includes("battery") || label.includes("hardware") || label.includes("modem")) {
+                    return categoriesMap["electronics"] ? categoriesMap["electronics"].id : "";
+                }
+                if (label.includes("food") || label.includes("fruit") || label.includes("vegetable") || label.includes("apple") || label.includes("banana") || label.includes("cabbage") || label.includes("leaf") || label.includes("flower") || label.includes("orange") || label.includes("lemon") || label.includes("meal")) {
+                    return categoriesMap["organic"] ? categoriesMap["organic"].id : "";
+                }
+                return "";
+            }
+
+            function handleFileSelect() {
+                const file = fileInput.files[0];
+                if (!file) return;
+
+                // Show spinner for Stage 1 upload
+                dropZone.classList.add("d-none");
+                spinner.classList.remove("d-none");
+
+                // Preview immediately using FileReader
+                const reader = new FileReader();
+                reader.onload = async function (e) {
+                    // Update preview source
+                    imgPreview.src = e.target.result;
+                    
+                    // Switch stages immediately to show form
+                    classificationStage.classList.add("d-none");
+                    detailsStage.classList.remove("d-none");
+
+                    // Restore dropzone state
+                    spinner.classList.add("d-none");
+                    dropZone.classList.remove("d-none");
+
+                    // Initialize Map
+                    initDetailsMap();
+
+                    // Show TF.js spinner
+                    const aiSpinner = document.getElementById("aiSpinner");
+                    const aiCard = document.getElementById("aiCard");
+                    aiSpinner.classList.remove("d-none");
+                    aiCard.classList.add("d-none");
+
+                    try {
+                        // Load and Classify with MobileNet model (Real client-side AI)
+                        await loadMobileNetModel();
+                        const predictions = await mobilenetModel.classify(imgPreview);
+                        
+                        aiSpinner.classList.add("d-none");
+                        aiCard.classList.remove("d-none");
+
+                        if (predictions && predictions.length > 0) {
+                            const topPred = predictions[0];
+                            const label = topPred.className;
+                            const confidence = topPred.probability;
+
+                            // Format title
+                            const displayLabel = label.split(',')[0].trim();
+                            aiCategoryName.innerText = displayLabel.charAt(0).toUpperCase() + displayLabel.slice(1);
+                            aiConfidence.innerText = `Confidence: ${(confidence * 100).toFixed(1)}%`;
+
+                            // Automatically pre-select corresponding category in dropdown
+                            const mappedId = mapMobileNetLabel(label);
+                            if (mappedId) {
+                                categoryDropdown.value = mappedId;
+                            } else {
+                                categoryDropdown.value = "";
+                            }
+
+                            calculateEarningEstimates();
+                            showToastNotification(`AI classified this as a ${displayLabel}!`, "success");
+                        }
+                    } catch (aiErr) {
+                        console.error("Local TensorFlow classification failed:", aiErr);
+                        aiSpinner.classList.add("d-none");
+                        aiCard.classList.remove("d-none");
+                        aiCategoryName.innerText = "Unknown Item";
+                        aiConfidence.innerText = "Classification failed (could not run tf.js).";
+                    }
+
+                    // Background AJAX POST to save file and get permanent URL
+                    const formData = new FormData();
+                    formData.append("wasteImage", file);
+
+                    fetch('/User/IdentifyWaste', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Swap preview src with permanent URL
+                            imgPreview.src = data.imageUrl;
+                        }
+                    })
+                    .catch(uploadErr => {
+                        console.error("Error saving uploaded image:", uploadErr);
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Initialize details map
+            function initDetailsMap() {
+                if (map) return;
+                map = L.map('mapPickup').setView([clientLat, clientLng], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                marker = L.marker([clientLat, clientLng], { draggable: true }).addTo(map);
+                marker.on('dragend', function () {
+                    const pos = marker.getLatLng();
+                    updateCoords(pos.lat, pos.lng);
+                });
+
+                map.on('click', function (e) {
+                    marker.setLatLng(e.latlng);
+                    updateCoords(e.latlng.lat, e.latlng.lng);
+                });
+            }
+
+            function updateCoords(lat, lng) {
+                clientLat = lat;
+                clientLng = lng;
+                userLatInput.value = lat.toFixed(6);
+                userLngInput.value = lng.toFixed(6);
+
+                // Recalculate distances of stores
+                sortAndCalculateStores();
+            }
+
+            // Geolocation Locate Me click handler
+            const btnLocateMe = document.getElementById("btnLocateMe");
+            btnLocateMe.addEventListener("click", () => {
+                if (navigator.geolocation) {
+                    btnLocateMe.disabled = true;
+                    btnLocateMe.innerHTML = '<span class="spinner-border spinner-border-sm me-1"><\/span> Locating...';
+
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            
+                            updateCoords(lat, lng);
+                            if (map && marker) {
+                                map.setView([lat, lng], 15);
+                                marker.setLatLng([lat, lng]);
+                            }
+
+                            btnLocateMe.disabled = false;
+                            btnLocateMe.innerHTML = '<i class="bi bi-geo-alt-fill"><\/i> Locate Me';
+                            showToastNotification("Location pinned successfully!", "success");
+                        },
+                        (err) => {
+                            btnLocateMe.disabled = false;
+                            btnLocateMe.innerHTML = '<i class="bi bi-geo-alt-fill"><\/i> Locate Me';
+                            showToastNotification("Geolocation failed. Pin manually.", "error");
+                        },
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                }
+            });
+
+            // Proximity Sorting and Point Estimation math
+            const storeCards = document.querySelectorAll(".store-card");
+            
+            function sortAndCalculateStores() {
+                const storeContainer = document.getElementById("storeContainer");
+                if (!storeContainer) return;
+
+                const sortedStores = [];
+                storeCards.forEach(card => {
+                    const storeLat = parseFloat(card.dataset.lat);
+                    const storeLng = parseFloat(card.dataset.lng);
+                    const distance = haversineDistance(clientLat, clientLng, storeLat, storeLng);
+                    
+                    card.querySelector(".distance-badge").innerText = `${distance.toFixed(2)} Km`;
+                    sortedStores.push({ element: card, distance: distance });
+                });
+
+                // Sort array nearest first
+                sortedStores.sort((a, b) => a.distance - b.distance);
+
+                // Re-append to container
+                sortedStores.forEach(s => storeContainer.appendChild(s.element));
+            }
+
+            // Haversine formula
+            function haversineDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371; // Earth radius in Km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = 
+                    Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            // Point estimates
+            function calculateEarningEstimates() {
+                const dropdown = document.getElementById("categoryDropdown");
+                const selectedOption = dropdown.options[dropdown.selectedIndex];
+                const multiplier = selectedOption ? parseFloat(selectedOption.dataset.rate) || 0 : 0;
+                const weight = parseFloat(weightInput.value) || 0;
+
+                const totalPoints = Math.round(weight * multiplier);
+
+                storeCards.forEach(card => {
+                    card.querySelector(".est-earning-text").innerText = `${totalPoints} points`;
+                });
+            }
+
+            // Save & Calculate Points click handler
+            const btnSaveDetails = document.getElementById("btnSaveDetails");
+            const pointsCalculationCard = document.getElementById("pointsCalculationCard");
+            const confirmWeight = document.getElementById("confirmWeight");
+            const mainPointsEstimate = document.getElementById("mainPointsEstimate");
+            const coordsCard = document.getElementById("coordsCard");
+            const storeColumn = document.getElementById("storeColumn");
+
+            btnSaveDetails.addEventListener("click", () => {
+                const categoryId = categoryDropdown.value;
+                const weight = parseFloat(weightInput.value);
+
+                if (!categoryId) {
+                    showToastNotification("Please select a waste category first.", "error");
+                    categoryDropdown.classList.add("is-invalid");
+                    return;
+                }
+                categoryDropdown.classList.remove("is-invalid");
+
+                if (isNaN(weight) || weight <= 0) {
+                    showToastNotification("Please enter a valid weight in Kg.", "error");
+                    weightInput.classList.add("is-invalid");
+                    return;
+                }
+                weightInput.classList.remove("is-invalid");
+
+                // Perform calculation
+                const selectedOption = categoryDropdown.options[categoryDropdown.selectedIndex];
+                const multiplier = parseFloat(selectedOption.dataset.rate) || 0;
+                const totalPoints = Math.round(weight * multiplier);
+
+                // Show estimate
+                mainPointsEstimate.innerText = `${totalPoints} points`;
+                confirmWeight.innerText = weight;
+                pointsCalculationCard.classList.remove("d-none");
+
+                // Uncollapse steps
+                coordsCard.classList.remove("d-none");
+                storeColumn.classList.remove("d-none");
+
+                // Initialize map and sort
+                initDetailsMap();
+                sortAndCalculateStores();
+                calculateEarningEstimates();
+
+                // Change button state to allow updates
+                btnSaveDetails.innerHTML = '<i class="bi bi-arrow-repeat me-1"><\/i> Recalculate Points';
+                btnSaveDetails.classList.remove("btn-success");
+                btnSaveDetails.classList.add("btn-outline-success");
+
+                showToastNotification("Points calculated! Select your store below.", "success");
+
+                // Smooth scroll to coordinates card
+                setTimeout(() => {
+                    coordsCard.scrollIntoView({ behavior: 'smooth' });
+                }, 200);
+            });
+
+            categoryDropdown.addEventListener("change", calculateEarningEstimates);
+            weightInput.addEventListener("input", calculateEarningEstimates);
+
+            // Store selection behavior
+            const selectedStoreIdInput = document.getElementById("selectedStoreId");
+            const btnSubmit = document.getElementById("btnSubmitRequest");
+
+            storeCards.forEach(card => {
+                card.addEventListener("click", () => {
+                    // Remove selection from all cards
+                    storeCards.forEach(c => c.classList.remove("border-success", "bg-success-subtle", "bg-opacity-10"));
+                    
+                    // Add selection to clicked card
+                    card.classList.add("border-success", "bg-success-subtle", "bg-opacity-10");
+
+                    // Set input
+                    selectedStoreIdInput.value = card.dataset.id;
+
+                    // Enable submit button
+                    btnSubmit.disabled = false;
+                });
+            });
+        });
+    </script>
+}

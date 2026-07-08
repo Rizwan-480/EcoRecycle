@@ -1,0 +1,74 @@
+@model List<EcoRecycle.Models.AuditLog>
+@{
+    ViewData["Title"] = "System Audit Logs";
+}
+
+<div class="row py-4">
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-shield-lock-fill me-2"></i>Platform Security Audit Logs</h2>
+            <p class="text-secondary m-0">Chronological history of platform transactions, profile changes, and admin activities.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i> Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="glass-card p-4 shadow-sm">
+            @if (Model != null && Model.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Action Event</th>
+                                <th>Affected Scope</th>
+                                <th>Details / Info</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="d-block fw-semibold text-primary-emphasis">@log.Timestamp.ToString("MMM dd, yyyy")</span>
+                                        <small class="text-secondary">@log.Timestamp.ToString("T")</small>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-dark-emphasis">@log.UserFullName</span>
+                                        @if (log.UserID.HasValue)
+                                        {
+                                            <small class="text-secondary d-block">ID: @log.UserID</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @(log.Action == "Login" || log.Action == "Logout" ? "bg-primary" : log.Action.Contains("Block") ? "bg-danger" : "bg-success") rounded-pill px-3 py-1">
+                                            @log.Action
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <code>@log.TableName</code>
+                                        @if (log.RecordID.HasValue && log.RecordID.Value > 0)
+                                        {
+                                            <small class="text-secondary d-block">Record ID: @log.RecordID</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="small text-secondary-emphasis">@log.Details</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-secondary text-center py-4">No audit logs found in the database.</p>
+            }
+        </div>
+    </div>
+</div>

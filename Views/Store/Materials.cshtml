@@ -1,0 +1,73 @@
+@model List<EcoRecycle.Models.WasteCategory>
+@{
+    ViewData["Title"] = "Materials & Rates";
+}
+
+<div class="row py-4">
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-diagram-3 me-2"></i>Recyclable Materials & Rates</h2>
+            <p class="text-secondary m-0">Standard reward points credited to users per kilogram of collected materials.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i> Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Materials list (Left) -->
+    <div class="col-lg-7">
+        <div class="glass-card p-4 shadow-sm h-100">
+            <h5 class="fw-bold text-success-emphasis border-bottom pb-2 mb-4">Recyclable Catalogs</h5>
+            <div class="d-flex flex-column gap-3">
+                @foreach (var c in Model)
+                {
+                    <div class="p-3 border rounded-4 bg-body-tertiary d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="btn-eco rounded-circle p-2 d-flex align-items-center justify-content-center text-white" style="width: 42px; height: 42px;">
+                                <i class="@(c.IconUrl ?? "bi-recycle") fs-5"></i>
+                            </div>
+                            <div>
+                                <span class="fw-bold text-primary-emphasis d-block">@c.Name</span>
+                                <small class="text-secondary text-truncate-2 d-inline-block" style="max-width: 250px;">@c.Description</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6 rounded-pill">
+                                @c.PointsPerKg pts / Kg
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Center guidelines / info (Right) -->
+    <div class="col-lg-5">
+        <div class="glass-card p-4 shadow-sm h-100 d-flex flex-column justify-content-between">
+            <div>
+                <h5 class="fw-bold text-success-emphasis border-bottom pb-2 mb-3">Recycling Center Guidelines</h5>
+                <ul class="list-group list-group-flush rounded-4 overflow-hidden border">
+                    <li class="list-group-item p-3">
+                        <i class="bi bi-info-circle text-success me-2"></i>
+                        <span class="small text-secondary-emphasis">Always verify cleanliness of plastics and glassware. Residuated oils contaminate recycling containers.</span>
+                    </li>
+                    <li class="list-group-item p-3">
+                        <i class="bi bi-info-circle text-success me-2"></i>
+                        <span class="small text-secondary-emphasis">Weigh electronics separately and ensure toxic batteries are packaged securely before logistics transport.</span>
+                    </li>
+                    <li class="list-group-item p-3">
+                        <i class="bi bi-info-circle text-success me-2"></i>
+                        <span class="small text-secondary-emphasis">Actual weights entered into the Complete page should match calibrated scale readings exactly.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-body-secondary p-3 rounded-4 mt-4 text-center">
+                <i class="bi bi-shield-check text-success fs-1 mb-2 d-block"></i>
+                <h6 class="fw-bold m-0 text-success-emphasis">Calibrated Weigh Scales Only</h6>
+                <small class="text-secondary">Stores must utilize calibrated industrial scales to calculate actual collection values fairly.</small>
+            </div>
+        </div>
+    </div>
+</div>

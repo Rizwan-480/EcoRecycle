@@ -1,0 +1,49 @@
+@model List<EcoRecycle.Models.EcoTip>
+@{
+    ViewData["Title"] = "Eco Tips";
+}
+
+<div class="row py-4">
+    <div class="col-lg-8 mx-auto text-center mb-5">
+        <h1 class="fw-bold text-success"><i class="bi bi-lightbulb-fill me-2"></i>Recycling Education & Tips</h1>
+        <p class="fs-5 text-secondary">Learn how to sort waste correctly, maximize rewards, and prevent ecological pollution.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    @if (Model != null && Model.Count > 0)
+    {
+        foreach (var item in Model)
+        {
+            <div class="col-md-6">
+                <div class="glass-card p-4 h-100 d-flex gap-3 align-items-start">
+                    <div class="btn-eco rounded-4 p-3 d-flex align-items-center justify-content-center text-white" style="width: 50px; height: 50px;">
+                        <i class="bi bi-patch-question fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-success-subtle text-success">@item.Category</span>
+                            <small class="text-secondary">Added @item.CreatedAt.ToString("MMM yyyy")</small>
+                        </div>
+                        <h4 class="fw-bold text-primary-emphasis mb-2">@item.Title</h4>
+                        <p class="text-secondary m-0">@item.TipContent</p>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12 text-center text-secondary">
+            <p>No eco tips available at this time. Please check back later.</p>
+        </div>
+    }
+</div>
+
+<div class="row mt-5 text-center bg-success-subtle p-5 rounded-4 border border-success-subtle">
+    <div class="col-md-8 mx-auto">
+        <h3 class="fw-bold text-success-emphasis mb-3">Ready to put this knowledge to use?</h3>
+        <p class="text-secondary-emphasis mb-4">Start sorting your plastic bottles, aluminum cans, and waste today. Schedule a home pickup and let local recycling stores process it safely.</p>
+        <a class="btn btn-success rounded-pill px-4 fw-bold" asp-controller="Account" asp-action="Register">Join EcoRecycle Today</a>
+    </div>
+</div>

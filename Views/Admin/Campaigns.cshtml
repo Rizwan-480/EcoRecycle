@@ -1,0 +1,183 @@
+@model List<EcoRecycle.Models.Campaign>
+@{
+    ViewData["Title"] = "Manage Campaigns";
+}
+
+<div class="row py-4">
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-globe-americas me-2"></i>Environmental Campaigns Manager</h2>
+            <p class="text-secondary m-0">Create new community environmental goals or review active participants.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success rounded-pill px-4" id="btnAddCampaign"><i class="bi bi-plus-lg me-1"></i> Add Campaign</button>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-flex align-items-center"><i class="bi bi-arrow-left me-1"></i> Back</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="glass-card p-4 shadow-sm">
+            @if (Model != null && Model.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Campaign Details</th>
+                                <th>Target Goal (Kg)</th>
+                                <th>Current Progress</th>
+                                <th>Dates</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary-emphasis d-block">@c.Name</strong>
+                                        <small class="text-secondary">@c.Description</small>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">@c.TargetGoal.ToString("N0") Kg</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2">@c.CurrentProgress.ToString("N1") Kg</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-secondary">@c.StartDate.ToString("MMM dd") - @c.EndDate.ToString("MMM dd, yyyy")</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(c.IsActive && c.EndDate >= DateTime.Now ? "bg-success" : "bg-secondary")">
+                                            @(c.IsActive && c.EndDate >= DateTime.Now ? "Active" : "Closed")
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 btn-edit-camp" data-id="@c.CampaignID" data-name="@c.Name" data-desc="@c.Description" data-target="@c.TargetGoal" data-start="@c.StartDate.ToString("yyyy-MM-dd")" data-end="@c.EndDate.ToString("yyyy-MM-dd")" data-active="@(c.IsActive ? "true" : "false")">
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Campaign Add/Edit -->
+<div class="modal fade" id="campaignModal" tabindex="-1" aria-labelledby="campaignModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <form asp-action="SaveCampaign" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-bold text-success-emphasis" id="campaignModalLabel">Add Campaign</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="campaignId" id="campIdInput" value="0" />
+
+                    <div class="mb-3">
+                        <label for="campNameInput" class="form-label fw-semibold">Campaign Name</label>
+                        <input type="text" name="name" id="campNameInput" class="form-control" placeholder="e.g. Clean the Neighborhood 2026" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="campDescInput" class="form-label fw-semibold">Description</label>
+                        <textarea name="description" id="campDescInput" class="form-control" rows="3" placeholder="Explain the objective and target benefits" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="campTargetInput" class="form-label fw-semibold">Target weight Goal (Kg)</label>
+                        <input type="number" name="targetGoal" id="campTargetInput" class="form-control" min="1" required />
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="campStartInput" class="form-label fw-semibold">Start Date</label>
+                            <input type="date" name="startDate" id="campStartInput" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="campEndInput" class="form-label fw-semibold">End Date</label>
+                            <input type="date" name="endDate" id="campEndInput" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="isActive" value="true" class="form-check-input" id="campActiveCheck" checked />
+                        <input type="hidden" name="isActive" value="false" />
+                        <label class="form-check-label text-secondary small" for="campActiveCheck">Campaign Active</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4">Save Campaign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modalEl = document.getElementById("campaignModal");
+            const modal = new bootstrap.Modal(modalEl);
+            const modalTitle = document.getElementById("campaignModalLabel");
+            
+            // Form inputs
+            const campId = document.getElementById("campIdInput");
+            const campName = document.getElementById("campNameInput");
+            const campDesc = document.getElementById("campDescInput");
+            const campTarget = document.getElementById("campTargetInput");
+            const campStart = document.getElementById("campStartInput");
+            const campEnd = document.getElementById("campEndInput");
+            const campCheck = document.getElementById("campActiveCheck");
+
+            // Add trigger
+            document.getElementById("btnAddCampaign").addEventListener("click", function () {
+                modalTitle.innerText = "Create Environmental Campaign";
+                campId.value = "0";
+                campName.value = "";
+                campDesc.value = "";
+                campTarget.value = "1000";
+                
+                // Date defaults
+                const today = new Date().toISOString().split('T')[0];
+                campStart.value = today;
+                
+                const nextMonth = new Date();
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                campEnd.value = nextMonth.toISOString().split('T')[0];
+                
+                campCheck.checked = true;
+                modal.show();
+            });
+
+            // Edit trigger
+            const editButtons = document.querySelectorAll(".btn-edit-camp");
+            editButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    modalTitle.innerText = "Edit Environmental Campaign";
+                    campId.value = btn.dataset.id;
+                    campName.value = btn.dataset.name;
+                    campDesc.value = btn.dataset.desc;
+                    campTarget.value = btn.dataset.target;
+                    
+                    // Format dates
+                    campStart.value = btn.dataset.start;
+                    campEnd.value = btn.dataset.end;
+                    
+                    campCheck.checked = btn.dataset.active === "true";
+                    modal.show();
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,308 @@
+@model EcoRecycle.Models.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Create Account";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-lg-8 col-xl-7">
+        <div class="glass-card p-4 p-md-5 border shadow">
+            <div class="text-center mb-4">
+                <i class="bi bi-recycle text-success display-4 mb-2 d-inline-block"></i>
+                <h2 class="fw-bold">Create an Account</h2>
+                <p class="text-secondary">Join EcoRecycle to start tracking, earning, or processing waste</p>
+            </div>
+
+            <form asp-action="Register" method="post" id="registerForm">
+                @Html.AntiForgeryToken()
+                
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger border-danger-subtle rounded-4 p-3 mb-4">
+                        <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please correct the following errors:</h6>
+                        <div asp-validation-summary="All" class="small m-0 text-danger"></div>
+                    </div>
+                }
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Username" class="form-label fw-semibold">Username</label>
+                        <input asp-for="Username" class="form-control" placeholder="Choose a username" required />
+                        <span asp-validation-for="Username" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label fw-semibold">Email Address</label>
+                        <input asp-for="Email" class="form-control" type="email" placeholder="name@example.com" required />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <label asp-for="Password" class="form-label fw-semibold">Password</label>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="At least 6 characters" required />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ConfirmPassword" class="form-label fw-semibold">Confirm Password</label>
+                        <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Re-type password" required />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="mb-3 form-check d-flex justify-content-end align-items-center gap-2">
+                    <input type="checkbox" class="form-check-input m-0" id="showPasswordRegisterCheck">
+                    <label class="form-check-label text-secondary small" for="showPasswordRegisterCheck">Show Passwords</label>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label fw-semibold">Full Name / Profile Name</label>
+                    <input asp-for="FullName" class="form-control" placeholder="Enter your full name" required />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="RoleName" class="form-label fw-semibold">Account Type</label>
+                    <select asp-for="RoleName" class="form-select" id="roleSelector" required>
+                        <option value="">-- Select Role --</option>
+                        <option value="User">Standard User (Recycler)</option>
+                        <option value="RecyclingStore">Recycling Store Owner</option>
+                    </select>
+                    <span asp-validation-for="RoleName" class="text-danger small"></span>
+                </div>
+
+                <!-- User specific profile options (collapsible) -->
+                <div id="userFieldsBlock" style="display: none;">
+                    <h5 class="fw-bold text-success border-bottom pb-2 mb-3">User Profile (Home Location)</h5>
+                    <div class="mb-3">
+                        <label asp-for="Address" class="form-label fw-semibold">Home Address</label>
+                        <input asp-for="Address" class="form-control" placeholder="Enter your street address" id="userAddressInput" />
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Latitude" class="form-label fw-semibold">Latitude</label>
+                            <input asp-for="Latitude" type="number" step="any" class="form-control" id="userLatInput" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Longitude" class="form-label fw-semibold">Longitude</label>
+                            <input asp-for="Longitude" type="number" step="any" class="form-control" id="userLngInput" readonly />
+                        </div>
+                    </div>
+                    <p class="text-secondary small mb-3">Drag the marker on the map to set your location coordinates for home pickups.</p>
+                </div>
+
+                <!-- Store specific profile options (collapsible) -->
+                <div id="storeFieldsBlock" style="display: none;">
+                    <h5 class="fw-bold text-success border-bottom pb-2 mb-3">Recycling Store Profile</h5>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="StoreName" class="form-label fw-semibold">Store Name</label>
+                            <input asp-for="StoreName" class="form-control" placeholder="EcoGreen Recycling Center" id="storeNameInput" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="StoreContactNumber" class="form-label fw-semibold">Store Contact Number</label>
+                            <input asp-for="StoreContactNumber" class="form-control" placeholder="+1 234 567 890" id="storeContactInput" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="StoreAddress" class="form-label fw-semibold">Store Address</label>
+                        <input asp-for="StoreAddress" class="form-control" placeholder="123 Eco Blvd, Green District" id="storeAddressInput" />
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="StoreOperatingHours" class="form-label fw-semibold">Operating Hours</label>
+                            <input asp-for="StoreOperatingHours" class="form-control" placeholder="9 AM - 6 PM, Mon-Sat" id="storeHoursInput" />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="StoreLatitude" class="form-label fw-semibold">Latitude</label>
+                            <input asp-for="StoreLatitude" type="number" step="any" class="form-control" id="storeLatInput" readonly />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="StoreLongitude" class="form-label fw-semibold">Longitude</label>
+                            <input asp-for="StoreLongitude" type="number" step="any" class="form-control" id="storeLngInput" readonly />
+                        </div>
+                    </div>
+                    <p class="text-secondary small mb-3">Drag the marker on the map to pin your storefront coordinates for user visibility.</p>
+                </div>
+
+                <!-- Interactive Leaflet map container (visible if role is selected) -->
+                <div id="mapContainerBlock" class="mb-4" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-semibold m-0">Pin Location on Map</label>
+                        <button type="button" class="btn btn-outline-success btn-sm rounded-pill" id="btnLocateMe">
+                            <i class="bi bi-geo-alt-fill me-1"></i> Locate Me
+                        </button>
+                    </div>
+                    <div id="regMap" style="height: 350px; border-radius: 12px; border: 1px solid var(--border-color);"></div>
+                </div>
+
+                <button type="submit" class="btn btn-eco w-100 py-2 fs-6 mb-3">Create Account</button>
+
+                <p class="text-center text-secondary small m-0">
+                    Already have an account? <a asp-action="Login" class="text-success fw-bold text-decoration-none">Sign In</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const roleSelector = document.getElementById("roleSelector");
+            const userBlock = document.getElementById("userFieldsBlock");
+            const storeBlock = document.getElementById("storeFieldsBlock");
+            const mapBlock = document.getElementById("mapContainerBlock");
+            
+            // Map inputs
+            const userLat = document.getElementById("userLatInput");
+            const userLng = document.getElementById("userLngInput");
+            const storeLat = document.getElementById("storeLatInput");
+            const storeLng = document.getElementById("storeLngInput");
+            
+            let map = null;
+            let marker = null;
+            const defaultLat = 17.385044; // Default Hyderabad coordinates
+            const defaultLng = 78.486671;
+
+            // Geolocation Locate Me click handler
+            const btnLocateMe = document.getElementById("btnLocateMe");
+            if (btnLocateMe) {
+                btnLocateMe.addEventListener("click", function () {
+                    if (navigator.geolocation) {
+                        btnLocateMe.disabled = true;
+                        btnLocateMe.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"><\/span> Locating...';
+                        
+                        navigator.geolocation.getCurrentPosition(
+                            function (position) {
+                                const lat = position.coords.latitude;
+                                const lng = position.coords.longitude;
+                                const role = roleSelector.value;
+                                
+                                updateCoords(lat, lng, role);
+                                
+                                if (map && marker) {
+                                    map.setView([lat, lng], 15);
+                                    marker.setLatLng([lat, lng]);
+                                }
+                                
+                                btnLocateMe.disabled = false;
+                                btnLocateMe.innerHTML = '<i class="bi bi-geo-alt-fill me-1"><\/i> Locate Me';
+                                showToastNotification("Location fetched successfully!", "success");
+                            },
+                            function (error) {
+                                btnLocateMe.disabled = false;
+                                btnLocateMe.innerHTML = '<i class="bi bi-geo-alt-fill me-1"><\/i> Locate Me';
+                                showToastNotification("Could not retrieve location. Please pin manually.", "error");
+                                console.error(error);
+                            },
+                            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                        );
+                    } else {
+                        showToastNotification("Your browser does not support Geolocation.", "error");
+                    }
+                });
+            }
+
+            roleSelector.addEventListener("change", function () {
+                const role = roleSelector.value;
+                
+                if (role === "User") {
+                    userBlock.style.display = "block";
+                    storeBlock.style.display = "none";
+                    mapBlock.style.display = "block";
+                    
+                    document.getElementById("userAddressInput").required = true;
+                    document.getElementById("storeNameInput").required = false;
+                    document.getElementById("storeAddressInput").required = false;
+                    
+                    initMap(userLat.value || defaultLat, userLng.value || defaultLng, "User");
+                } else if (role === "RecyclingStore") {
+                    userBlock.style.display = "none";
+                    storeBlock.style.display = "block";
+                    mapBlock.style.display = "block";
+                    
+                    document.getElementById("userAddressInput").required = false;
+                    document.getElementById("storeNameInput").required = true;
+                    document.getElementById("storeAddressInput").required = true;
+                    
+                    initMap(storeLat.value || defaultLat, storeLng.value || defaultLng, "Store");
+                } else {
+                    userBlock.style.display = "none";
+                    storeBlock.style.display = "none";
+                    mapBlock.style.display = "none";
+                }
+            });
+
+            // Trigger change on load if a role is pre-selected (e.g. after postback validation error)
+            if (roleSelector.value) {
+                roleSelector.dispatchEvent(new Event('change'));
+            }
+
+            function initMap(lat, lng, type) {
+                // Initialize map if not done
+                if (!map) {
+                    map = L.map('regMap').setView([lat, lng], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(map);
+                    
+                    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                    
+                    // Update coordinates inputs on marker drag end
+                    marker.on('dragend', function (event) {
+                        const position = marker.getLatLng();
+                        updateCoords(position.lat, position.lng, type);
+                    });
+                    
+                    // Update coordinates inputs on click
+                    map.on('click', function (event) {
+                        marker.setLatLng(event.latlng);
+                        updateCoords(event.latlng.lat, event.latlng.lng, type);
+                    });
+                } else {
+                    // Update map size and center
+                    setTimeout(() => {
+                        map.invalidateSize();
+                        map.setView([lat, lng], 13);
+                        marker.setLatLng([lat, lng]);
+                    }, 200);
+                }
+                
+                // Write defaults if empty
+                if (type === "User" && (!userLat.value || !userLng.value)) {
+                    updateCoords(lat, lng, "User");
+                } else if (type === "Store" && (!storeLat.value || !storeLng.value)) {
+                    updateCoords(lat, lng, "Store");
+                }
+            }
+
+            function updateCoords(lat, lng, type) {
+                const roundedLat = parseFloat(lat).toFixed(6);
+                const roundedLng = parseFloat(lng).toFixed(6);
+                
+                if (type === "User") {
+                    userLat.value = roundedLat;
+                    userLng.value = roundedLng;
+                } else {
+                    storeLat.value = roundedLat;
+                    storeLng.value = roundedLng;
+                }
+            }
+
+            // Show/Hide password toggle in registration
+            const showPasswordRegisterCheck = document.getElementById('showPasswordRegisterCheck');
+            const registerPasswordInput = document.getElementById('Password');
+            const registerConfirmPasswordInput = document.getElementById('ConfirmPassword');
+            
+            if (showPasswordRegisterCheck && registerPasswordInput && registerConfirmPasswordInput) {
+                showPasswordRegisterCheck.addEventListener('change', function () {
+                    const type = this.checked ? 'text' : 'password';
+                    registerPasswordInput.setAttribute('type', type);
+                    registerConfirmPasswordInput.setAttribute('type', type);
+                });
+            }
+        });
+    </script>
+}

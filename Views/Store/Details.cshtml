@@ -1,0 +1,170 @@
+@model EcoRecycle.Models.ViewModels.StorePickupDetailsViewModel
+@{
+    ViewData["Title"] = "Pickup Request Details";
+}
+
+<div class="row py-4">
+    <div class="col-lg-10 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-calendar-event me-2"></i>Pickup Logistics Manager</h2>
+                <p class="text-secondary m-0">Review estimated weights, client coordinates, and set collection dates.</p>
+            </div>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3"><i class="bi bi-arrow-left me-1"></i> Back to Dashboard</a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Side: Details & Map -->
+            <div class="col-md-7">
+                <div class="glass-card p-4 shadow-sm mb-4">
+                    <h5 class="fw-bold text-success border-bottom pb-2 mb-3">Client & Location details</h5>
+                    
+                    <table class="table table-borderless align-middle mb-4">
+                        <tbody>
+                            <tr>
+                                <td class="text-secondary small fw-medium" style="width: 130px;">Client Name:</td>
+                                <td class="fw-bold text-primary-emphasis">@Model.Pickup.UserFullName</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary small fw-medium">Client Email:</td>
+                                <td>@Model.Pickup.UserEmail</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary small fw-medium">Street Address:</td>
+                                <td class="small">@Model.Pickup.Address</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary small fw-medium">Special Notes:</td>
+                                <td class="small text-secondary">@(Model.Pickup.Notes ?? "No instructions provided")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-secondary small fw-medium">Status:</td>
+                                <td>
+                                    <span class="badge @(Model.Pickup.Status == "Completed" ? "bg-success" : Model.Pickup.Status == "Scheduled" ? "bg-info text-white" : Model.Pickup.Status == "Accepted" ? "bg-primary" : "bg-warning text-dark") px-3 py-1 rounded-pill">
+                                        @Model.Pickup.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h5 class="fw-bold text-success border-bottom pb-2 mb-3">Interactive Location Pin</h5>
+                    <div id="detailsMap" style="height: 250px; border-radius: 12px; border: 1px solid var(--border-color);"></div>
+                </div>
+
+                <div class="glass-card p-4 shadow-sm">
+                    <h5 class="fw-bold text-success border-bottom pb-2 mb-3">Estimated Materials List</h5>
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var item in Model.Items)
+                        {
+                            <div class="p-3 border rounded-4 bg-body-tertiary d-flex justify-content-between">
+                                <span class="fw-bold text-primary-emphasis">@item.CategoryName</span>
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis">Est: @item.EstimatedWeight.Value.ToString("N1") Kg</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Logistics action schedules -->
+            <div class="col-md-5">
+                <!-- Pending Acceptance block -->
+                @if (Model.Pickup.Status == "Pending")
+                {
+                    <div class="glass-card p-4 shadow-sm mb-4 border-warning bg-warning bg-opacity-10">
+                        <h5 class="fw-bold text-warning-emphasis border-bottom pb-2 mb-3"><i class="bi bi-clock-history me-2"></i>Pending Request</h5>
+                        <p class="text-secondary small mb-3">This request is waiting for your store's approval. Select a collection schedule date/time to approve and schedule it.</p>
+                        
+                        <form asp-action="AcceptRequest" method="post" class="mb-3">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Pickup.PickupID" />
+                            
+                            <div class="mb-3">
+                                <label for="scheduleDateInputPending" class="form-label fw-semibold">Choose Pickup Date & Time</label>
+                                <input type="datetime-local" id="scheduleDateInputPending" name="scheduledDate" class="form-control" required />
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100 py-2"><i class="bi bi-check-circle-fill me-1"></i> Approve & Schedule</button>
+                        </form>
+
+                        <form asp-action="RejectRequest" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Pickup.PickupID" />
+                            <button type="submit" class="btn btn-outline-danger w-100 py-2" onclick="return confirm('Are you sure you want to decline this request?');"><i class="bi bi-x-circle-fill me-1"></i> Reject Request</button>
+                        </form>
+                    </div>
+                }
+
+                <!-- Status schedule box -->
+                @if (Model.Pickup.Status == "Accepted" || Model.Pickup.Status == "Scheduled")
+                {
+                    <div class="glass-card p-4 shadow-sm mb-4 border-success-subtle bg-success-subtle bg-opacity-25">
+                        <h5 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="bi bi-clock me-2"></i>Schedule Collection</h5>
+                        
+                        <form asp-action="SchedulePickup" method="post">
+                            <input type="hidden" name="pickupId" value="@Model.Pickup.PickupID" />
+                            
+                            <div class="mb-3">
+                                <label for="scheduleDateInput" class="form-label fw-semibold">Scheduled Date & Time</label>
+                                <input type="datetime-local" id="scheduleDateInput" name="scheduledDate" class="form-control" value="@(Model.Pickup.ScheduledDate.HasValue ? Model.Pickup.ScheduledDate.Value.ToString("yyyy-MM-ddTHH:mm") : "")" required />
+                            </div>
+
+                            <button type="submit" class="btn btn-eco w-100 py-2 mb-2"><i class="bi bi-calendar-check me-1"></i> Update Schedule</button>
+                        </form>
+
+                        <hr class="my-4">
+
+                        <h5 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="bi bi-check-circle me-2"></i>Finalize Collection</h5>
+                        <p class="text-secondary small mb-3">Weighed the waste materials on-site? Complete the pickup to credit user reward points.</p>
+                        <a asp-action="Complete" asp-route-id="@Model.Pickup.PickupID" class="btn btn-success btn-lg w-100 py-3 rounded-pill fw-bold"><i class="bi bi-patch-check-fill me-1"></i> Complete Collection</a>
+                    </div>
+                }
+                else if (Model.Pickup.Status == "Completed")
+                {
+                    <div class="glass-card p-4 shadow-sm mb-4 text-center border-success bg-success bg-opacity-10">
+                        <i class="bi bi-check-circle-fill text-success display-4 mb-3 d-block"></i>
+                        <h5 class="fw-bold text-success-emphasis">Collection Completed</h5>
+                        <p class="text-secondary small mb-3">This pickup request was completed successfully. Details:</p>
+                        
+                        <div class="p-3 border rounded-4 bg-body-tertiary mb-3 text-start">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small text-secondary">Total Weight:</span>
+                                <strong class="text-dark-emphasis">@Model.Pickup.TotalWeight.Value.ToString("N1") Kg</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small text-secondary">Points Credited:</span>
+                                <strong class="text-success">+@Model.Pickup.TotalPoints pts</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="small text-secondary">Completed Date:</span>
+                                <strong class="text-dark-emphasis">@Model.Pickup.UpdatedAt.ToString("MMM dd, yyyy")</strong>
+                            </div>
+                        </div>
+
+                        <a asp-action="History" class="btn btn-outline-success btn-sm rounded-pill px-4">View All Completed Pickups</a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Client Location Coordinates
+            const lat = parseFloat("@Model.Pickup.Latitude") || 17.385044;
+            const lng = parseFloat("@Model.Pickup.Longitude") || 78.486671;
+
+            // Initialize Map
+            const map = L.map('detailsMap').setView([lat, lng], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            L.marker([lat, lng]).addTo(map)
+                .bindPopup("<strong>Client Pickup Location</strong><br>@Model.Pickup.Address")
+                .openPopup();
+        });
+    </script>
+}

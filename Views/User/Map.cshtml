@@ -1,0 +1,133 @@
+@{
+    ViewData["Title"] = "Recycling Centers Map";
+    var stores = ViewBag.Stores as List<EcoRecycle.Models.Store>;
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold m-0 text-success-emphasis"><i class="bi bi-map me-2"></i>Nearby Recycling Centers</h2>
+        <p class="text-secondary m-0">Find approved recycling stores, coordinates, operating hours, and distance from your location.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Map Canvas (Left) -->
+    <div class="col-lg-8">
+        <div class="glass-card p-2 shadow-sm">
+            <div id="map" style="height: 480px; border-radius: 12px;"></div>
+        </div>
+    </div>
+
+    <!-- Center List (Right) -->
+    <div class="col-lg-4">
+        <div class="glass-card p-4 h-100 shadow-sm d-flex flex-column justify-content-between" style="max-height: 500px; overflow-y: auto;">
+            <div>
+                <h5 class="fw-bold text-success-emphasis border-bottom pb-2 mb-3"><i class="bi bi-list-stars me-2"></i>Nearest Centers</h5>
+                
+                <div class="d-flex flex-column gap-3" id="storesList">
+                    @if (stores != null && stores.Count > 0)
+                    {
+                        foreach (var store in stores)
+                        {
+                            <div class="p-3 border rounded-4 bg-body-tertiary store-item" data-lat="@store.Latitude" data-lng="@store.Longitude" style="cursor: pointer;">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h6 class="fw-bold text-primary-emphasis m-0">@store.StoreName</h6>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle store-distance" id="dist-@store.StoreID">Calculating...</span>
+                                </div>
+                                <p class="text-secondary small my-2"><i class="bi bi-geo-alt me-1"></i> @store.StoreAddress</p>
+                                <div class="d-flex justify-content-between small text-secondary">
+                                    <span><i class="bi bi-clock me-1"></i> @(store.OperatingHours ?? "9 AM - 6 PM")</span>
+                                    <span><i class="bi bi-telephone me-1"></i> @(store.ContactNumber ?? "N/A")</span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-secondary text-center py-4">No approved recycling stores found in the database.</p>
+                    }
+                </div>
+            </div>
+            
+            <p class="text-secondary small mt-4 m-0"><i class="bi bi-info-circle me-1"></i> Distances are computed dynamically from your registered home address.</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // User coordinates
+            const userLat = parseFloat("@ViewBag.UserLat");
+            const userLng = parseFloat("@ViewBag.UserLng");
+
+            // Initialize Leaflet Map
+            const map = L.map('map').setView([userLat, userLng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // User Location Marker
+            const userIcon = L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            L.marker([userLat, userLng], { icon: userIcon }).addTo(map)
+                .bindPopup('<strong>My Home Location</strong><br>Registered address')
+                .openPopup();
+
+            // Store locations list
+            const stores = [];
+            @if (stores != null)
+            {
+                foreach (var store in stores)
+                {
+                    <text>
+                    stores.push({
+                        id: parseInt("@store.StoreID"),
+                        name: "@store.StoreName",
+                        lat: parseFloat("@store.Latitude"),
+                        lng: parseFloat("@store.Longitude"),
+                        address: "@store.StoreAddress",
+                        hours: "@(store.OperatingHours ?? "9 AM - 6 PM")",
+                        phone: "@(store.ContactNumber ?? "N/A")"
+                    });
+                    </text>
+                }
+            }
+
+            // Add Store Markers & Calculate Distances
+            stores.forEach(store => {
+                // Add marker
+                const storeMarker = L.marker([store.lat, store.lng]).addTo(map)
+                    .bindPopup(`<strong>${store.name}</strong><br>${store.address}<br>Hours: ${store.hours}<br>Phone: ${store.phone}`);
+
+                // Calculate geodesic distance
+                const userLatLng = L.latLng(userLat, userLng);
+                const storeLatLng = L.latLng(store.lat, store.lng);
+                const distanceMeters = userLatLng.distanceTo(storeLatLng);
+                const distanceKm = (distanceMeters / 1000).toFixed(1);
+
+                // Update text badge in HTML panel
+                const badge = document.getElementById(`dist-${store.id}`);
+                if (badge) {
+                    badge.innerText = `${distanceKm} Km`;
+                }
+
+                // Add fly-to zoom click behavior to list items
+                const element = document.querySelector(`.store-item[data-lat="${store.lat}"][data-lng="${store.lng}"]`);
+                if (element) {
+                    element.addEventListener("click", () => {
+                        map.flyTo([store.lat, store.lng], 15);
+                        storeMarker.openPopup();
+                    });
+                }
+            });
+        });
+    </script>
+}

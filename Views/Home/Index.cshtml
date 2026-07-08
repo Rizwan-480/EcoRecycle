@@ -1,0 +1,158 @@
+@{
+    ViewData["Title"] = "Welcome";
+    var news = ViewBag.News as List<EcoRecycle.Models.News>;
+    var tips = ViewBag.Tips as List<EcoRecycle.Models.EcoTip>;
+}
+
+<!-- Hero Banner Section -->
+<div class="row align-items-center g-5 py-5 mb-5 rounded-4 hero-banner">
+    <div class="col-lg-6">
+        <h1 class="hero-title mb-4">
+            Recycle <span class="hero-highlight">Smart.</span> <br />
+            Earn Rewards. <br />
+            Save the Planet.
+        </h1>
+        <p class="fs-5 text-secondary mb-4">
+            EcoRecycle connects households, recycling centers, and communities. Snap a photo to let our AI identify recyclable materials, schedule a contactless home pickup, collect points, and redeem them for awesome eco-friendly goods.
+        </p>
+        <div class="d-flex gap-3">
+            <a class="btn btn-success btn-lg rounded-pill px-4" asp-controller="Account" asp-action="Register">Get Started Now</a>
+            <a class="btn btn-outline-secondary btn-lg rounded-pill px-4" asp-controller="Home" asp-action="EcoTips">Learn Recycling Tips</a>
+        </div>
+    </div>
+    <div class="col-lg-6 text-center">
+        <!-- Generate a mockup of the app dashboard using Bootstrap elements -->
+        <div class="glass-card text-start p-4 border shadow-lg mx-auto" style="max-width: 450px;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold m-0 text-success"><i class="bi bi-cpu-fill me-2"></i>AI Waste Classifier</h5>
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Online</span>
+            </div>
+            
+            <div class="text-center py-4 border border-dashed rounded-4 bg-body-tertiary mb-3">
+                <i class="bi bi-image text-success fs-1"></i>
+                <p class="text-secondary small mt-2">water_bottle_input.jpg uploaded</p>
+            </div>
+
+            <div class="bg-body-secondary rounded-4 p-3 mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-medium">Detected Material:</span>
+                    <span class="badge bg-success">Plastic (PET)</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-medium">Confidence Score:</span>
+                    <span class="fw-bold text-success">98.4%</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="fw-medium">Estimated Reward:</span>
+                    <span class="fw-bold text-primary">+30 Points / Kg</span>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex gap-2">
+                    <span class="badge bg-primary-subtle text-primary">Recyclable</span>
+                    <span class="badge bg-info-subtle text-info">Incentivized</span>
+                </div>
+                <button class="btn btn-sm btn-success rounded-pill px-3">Schedule Pickup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Platform Features Section -->
+<div class="row g-4 text-center py-5 mb-5">
+    <h2 class="fw-bold text-center mb-5"><i class="bi bi-stars text-success me-2"></i>How EcoRecycle Works</h2>
+    <div class="col-md-4">
+        <div class="glass-card p-4 h-100">
+            <div class="btn-eco rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 60px; height: 60px; font-size: 1.8rem;">
+                <i class="bi bi-camera"></i>
+            </div>
+            <h4 class="fw-bold">1. Snap & Identify</h4>
+            <p class="text-secondary">Take a photo of any waste item. Our AI analyzes the shape and material, classifying it instantly and letting you know if it is recyclable.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="glass-card p-4 h-100">
+            <div class="btn-eco rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 60px; height: 60px; font-size: 1.8rem;">
+                <i class="bi bi-truck"></i>
+            </div>
+            <h4 class="fw-bold">2. Schedule Pickup</h4>
+            <p class="text-secondary">Pin your location on our interactive map and request a pickup. A local approved recycling store will accept and schedule a pickup.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="glass-card p-4 h-100">
+            <div class="btn-eco rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 60px; height: 60px; font-size: 1.8rem;">
+                <i class="bi bi-gift"></i>
+            </div>
+            <h4 class="fw-bold">3. Earn & Redeem</h4>
+            <p class="text-secondary">Receive reward points credited instantly after pickup. Redeem points for stainless steel flasks, tote bags, and keyrings via secure QR codes.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Recent News Section -->
+<div class="py-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold m-0"><i class="bi bi-newspaper text-success me-2"></i>Latest Environmental News</h3>
+    </div>
+    <div class="row g-4">
+        @if (news != null && news.Count > 0)
+        {
+            foreach (var item in news)
+            {
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-body-tertiary">
+                        <div class="py-5 bg-success text-center text-white">
+                            <i class="bi bi-globe-americas display-3"></i>
+                        </div>
+                        <div class="card-body p-4">
+                            <small class="text-secondary">@item.CreatedAt.ToString("MMMM dd, yyyy")</small>
+                            <h5 class="card-title fw-bold my-2 text-primary-emphasis">@item.Title</h5>
+                            <p class="card-text text-secondary text-truncate-3">
+                                @(item.Content.Length > 150 ? item.Content.Substring(0, 150) + "..." : item.Content)
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 px-4 pb-4">
+                            <a asp-action="NewsDetails" asp-route-id="@item.NewsID" class="btn btn-outline-success btn-sm rounded-pill px-3">Read Full Article</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12 text-center text-secondary">
+                <p>No news articles available at the moment.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Eco Tips Section -->
+<div class="py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold m-0"><i class="bi bi-lightbulb text-success me-2"></i>Eco Tips & Guides</h3>
+        <a asp-action="EcoTips" class="btn btn-link text-success fw-bold text-decoration-none">View All Tips <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-4">
+        @if (tips != null && tips.Count > 0)
+        {
+            foreach (var item in tips)
+            {
+                <div class="col-md-6">
+                    <div class="glass-card p-4 h-100 d-flex gap-3 align-items-start">
+                        <div class="btn-eco rounded-4 p-3 d-flex align-items-center justify-content-center text-white" style="width: 50px; height: 50px;">
+                            <i class="bi bi-info-circle fs-4"></i>
+                        </div>
+                        <div>
+                            <span class="badge bg-success-subtle text-success mb-2">@item.Category</span>
+                            <h5 class="fw-bold text-primary-emphasis mb-1">@item.Title</h5>
+                            <p class="text-secondary small m-0">@item.TipContent</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
